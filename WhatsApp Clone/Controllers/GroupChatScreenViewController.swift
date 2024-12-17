@@ -1,0 +1,139 @@
+//
+//  GroupChatScreenViewController.swift
+//  WhatsApp Clone
+//
+//  Created by Elexoft on 12/11/2024.
+//
+
+import UIKit
+import FirebaseAuth
+import FirebaseFirestore
+
+class GroupChatScreenViewController: UIViewController {
+
+    @IBOutlet weak var groupChatTableView: UITableView!
+    @IBOutlet weak var messageTextfield: UITextField!
+    
+    let db = Firestore.firestore()
+    
+    var titleName  = ""
+    var groupID = ""
+    
+    var groupMessageChats: [GroupMessageChat] = []
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        // Do any additional setup after loading the view.
+        groupChatTableView.dataSource = self
+        
+        title = titleName
+        
+        print(groupID)
+        
+        groupChatTableView.register(UINib(nibName: K.NibNames.groupChatCellNibName, bundle: nil), forCellReuseIdentifier: K.Identifiers.groupChatCellIdentifier)
+        
+        loadMessages()
+    }
+    
+    func loadMessages() {
+        // Modified Code
+        
+        db.collection(K.FStore.groupCollection)
+            .document(groupID)
+            .collection(K.FStore.messageCollection)
+            .order(by: K.FStore.dateField)
+            .addSnapshotListener { querySnapshot, error in
+                if let e = error {
+                    print("There was an issue retrieving data from Firestore: \(e)")
+                } else {
+                    self.groupMessageChats.removeAll()
+                    if let snapshotDocuments = querySnapshot?.documents {
+                        for doc in snapshotDocuments {
+                            let data = doc.data()
+                            
+                            if let messageBody = data[K.FStore.messageField] as? String, let messageId = data[K.FStore.senderID] as? String {
+                                let newMessage = GroupMessageChat(message: messageBody, senderID: messageId)
+                                self.groupMessageChats.append(newMessage)
+                            }
+                        }
+                    }
+
+                    DispatchQueue.main.async {
+                        self.groupChatTableView.reloadData()
+                        
+                        if self.groupMessageChats.count > 0 {
+                            let indexPath = IndexPath(row: self.groupMessageChats.count - 1, section: 0)
+                            self.groupChatTableView.scrollToRow(at: indexPath, at: .top, animated: true)
+                        }
+                    }
+                }
+            }
+    }
+    
+    @IBAction func sendPressed(_ sender: UIButton) {
+        
+        // Modified Code
+        if let messageBody = messageTextfield.text, let senderID = Auth.auth().currentUser?.uid {
+            
+            db.collection(K.FStore.groupCollection)
+                .document(groupID)
+                .collection(K.FStore.messageCollection)
+                .addDocument(data: [
+                K.FStore.senderID: senderID,
+                K.FStore.messageField: messageBody,
+                K.FStore.dateField: Date().timeIntervalSince1970
+            ]) { error in
+                if let e = error {
+                    print("There was an issue saving messages to firestore, \(e)")
+                } else {
+                    print("Successfully saved data.")
+                    
+                    self.loadMessages()
+                    
+                    // Setting the text field to empty after clicking the send button
+                    DispatchQueue.main.async {
+                        self.messageTextfield.text = ""
+                    }
+                }
+            }
+        }
+    }
+}
+
+extension GroupChatScreenViewController: UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return groupMessageChats.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let groupMessageChat = groupMessageChats[indexPath.row]
+        
+        let cell = tableView.dequeueReusableCell(withIdentifier: K.Identifiers.groupChatCellIdentifier, for: indexPath) as! GroupChatCell
+        
+        cell.labelName.text = groupMessageChat.message
+        
+        print("Testing code starts from here")
+        if groupMessageChat.senderID == Auth.auth().currentUser?.uid {
+            print(Auth.auth().currentUser?.uid ?? "No id")
+            cell.leftImageView.isHidden = true
+            cell.rightImageView.isHidden = false
+            cell.messageBubble.backgroundColor = UIColor(
+                    red: CGFloat(160) / 255.0,
+                    green: CGFloat(214) / 255.0,
+                    blue: CGFloat(131) / 255.0,
+                    alpha: 1.0
+                )
+        } else {
+            cell.leftImageView.isHidden = false
+            cell.rightImageView.isHidden = true
+            cell.messageBubble.backgroundColor = UIColor(
+                red: CGFloat(114) / 255.0,
+                green: CGFloat(191) / 255.0,
+                blue: CGFloat(120) / 255.0,
+                alpha: 1.0
+            )
+        }
+        return cell
+    }
+}

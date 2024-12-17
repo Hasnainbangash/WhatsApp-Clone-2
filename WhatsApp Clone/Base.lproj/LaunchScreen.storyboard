@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="EHf-IW-A2E">
+            <objects>
+                <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="ZCy-bU-z9J">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="whatsapp" translatesAutoresizingMaskIntoConstraints="NO" id="42m-CD-Gtw">
+                                <rect key="frame" x="153.66666666666666" y="389.66666666666669" width="86" height="73"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="73" id="5mA-Vo-zXA"/>
+                                    <constraint firstAttribute="width" constant="86" id="ZU5-ng-yGs"/>
+                                </constraints>
+                            </imageView>
+                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" alignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="h5a-KZ-oua">
+                                <rect key="frame" x="160.66666666666666" y="737.66666666666663" width="72" height="55.333333333333371"/>
+                                <subviews>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="From" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jjN-2h-x20">
+                                        <rect key="frame" x="16.333333333333346" y="0.0" width="39.333333333333343" height="20.333333333333332"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <nil key="textColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="meta logo" translatesAutoresizingMaskIntoConstraints="NO" id="uTE-6c-BZd">
+                                        <rect key="frame" x="0.0" y="20.333333333333371" width="72" height="35"/>
+                                        <constraints>
+                                            <constraint firstAttribute="height" constant="35" id="Ck2-Yi-fj2"/>
+                                            <constraint firstAttribute="width" constant="72" id="Jke-t7-hoH"/>
+                                        </constraints>
+                                    </imageView>
+                                </subviews>
+                            </stackView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="0iy-OX-g1C"/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                        <constraints>
+                            <constraint firstItem="42m-CD-Gtw" firstAttribute="centerY" secondItem="ZCy-bU-z9J" secondAttribute="centerY" id="UpY-YX-Rpl"/>
+                            <constraint firstItem="42m-CD-Gtw" firstAttribute="centerX" secondItem="ZCy-bU-z9J" secondAttribute="centerX" id="gHY-gU-raz"/>
+                            <constraint firstItem="0iy-OX-g1C" firstAttribute="bottom" secondItem="h5a-KZ-oua" secondAttribute="bottom" constant="25" id="hyW-Xh-Vfj"/>
+                            <constraint firstItem="h5a-KZ-oua" firstAttribute="centerX" secondItem="42m-CD-Gtw" secondAttribute="centerX" id="sEZ-zi-j2I"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="53" y="375"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="meta logo" width="288.66665649414062" height="216.66667175292969"/>
+        <image name="whatsapp" width="170.66667175292969" height="170.66667175292969"/>
+    </resources>
+</document>
