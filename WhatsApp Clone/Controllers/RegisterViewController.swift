@@ -68,7 +68,7 @@ class RegisterViewController: UIViewController {
         newUser.senderName = name
         newUser.email = email
         newUser.userID = userId
-        newUser.date = Date()
+        newUser.date = Date().timeIntervalSince1970
         
         PersistentStorage.shared.saveContext()
     }
