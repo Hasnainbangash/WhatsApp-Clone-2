@@ -8,13 +8,17 @@
 import UIKit
 import FirebaseAuth
 import FirebaseFirestore
+import CoreData
 
 class GroupChatScreenViewController: UIViewController {
-
+    
     @IBOutlet weak var groupChatTableView: UITableView!
     @IBOutlet weak var messageTextfield: UITextField!
     
     let db = Firestore.firestore()
+    
+    // Reference to Imanaged object context
+    let context = PersistentStorage.shared.context
     
     var titleName  = ""
     var groupID = ""
@@ -23,7 +27,7 @@ class GroupChatScreenViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         // Do any additional setup after loading the view.
         groupChatTableView.dataSource = self
         
@@ -36,7 +40,28 @@ class GroupChatScreenViewController: UIViewController {
         loadMessages()
     }
     
-    func loadMessages() {
+    // Fetch messages from Core Data
+    func fetchMessagesFromCoreData() {
+        do {
+            let request = GroupMessages.fetchRequest() as NSFetchRequest<GroupMessages>
+            let messages = try context.fetch(request)
+            self.groupMessageChats = messages.map { GroupMessageChat(message: $0.message ?? "Null", senderID: $0.senderID ?? "nil") }
+        } catch let error {
+            print(error.localizedDescription)
+        }
+    }
+    
+    // Save the message to Core Data
+    func saveMessageToCoreData(message: String, senderID: String) {
+        let newMessage = GroupMessages(context: self.context)
+        newMessage.message = message
+        newMessage.senderID = senderID
+        newMessage.date = Date().timeIntervalSince1970
+        
+        PersistentStorage.shared.saveContext()
+    }
+    
+    func fetchMessagesFromFirestore() {
         // Modified Code
         
         db.collection(K.FStore.groupCollection)
@@ -58,7 +83,7 @@ class GroupChatScreenViewController: UIViewController {
                             }
                         }
                     }
-
+                    
                     DispatchQueue.main.async {
                         self.groupChatTableView.reloadData()
                         
@@ -71,32 +96,38 @@ class GroupChatScreenViewController: UIViewController {
             }
     }
     
+    func loadMessages() {
+        
+    }
+    
     @IBAction func sendPressed(_ sender: UIButton) {
         
-        // Modified Code
         if let messageBody = messageTextfield.text, let senderID = Auth.auth().currentUser?.uid {
             
             db.collection(K.FStore.groupCollection)
                 .document(groupID)
                 .collection(K.FStore.messageCollection)
                 .addDocument(data: [
-                K.FStore.senderID: senderID,
-                K.FStore.messageField: messageBody,
-                K.FStore.dateField: Date().timeIntervalSince1970
-            ]) { error in
-                if let e = error {
-                    print("There was an issue saving messages to firestore, \(e)")
-                } else {
-                    print("Successfully saved data.")
-                    
-                    self.loadMessages()
-                    
-                    // Setting the text field to empty after clicking the send button
-                    DispatchQueue.main.async {
-                        self.messageTextfield.text = ""
+                    K.FStore.senderID: senderID,
+                    K.FStore.messageField: messageBody,
+                    K.FStore.dateField: Date().timeIntervalSince1970
+                ]) { error in
+                    if let e = error {
+                        print("There was an issue saving messages to firestore, \(e)")
+                    } else {
+                        print("Successfully saved data.")
+                        
+                        // Saving the messages to the core data
+                        self.saveMessageToCoreData(message: messageBody, senderID: senderID)
+                        
+                        self.loadMessages()
+                        
+                        // Setting the text field to empty after clicking the send button
+                        DispatchQueue.main.async {
+                            self.messageTextfield.text = ""
+                        }
                     }
                 }
-            }
         }
     }
 }
@@ -107,33 +138,38 @@ extension GroupChatScreenViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let groupMessageChat = groupMessageChats[indexPath.row]
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: K.Identifiers.groupChatCellIdentifier, for: indexPath) as! GroupChatCell
-        
-        cell.labelName.text = groupMessageChat.message
-        
-        print("Testing code starts from here")
-        if groupMessageChat.senderID == Auth.auth().currentUser?.uid {
-            print(Auth.auth().currentUser?.uid ?? "No id")
-            cell.leftImageView.isHidden = true
-            cell.rightImageView.isHidden = false
-            cell.messageBubble.backgroundColor = UIColor(
+        if indexPath.row < groupMessageChats.count {
+            let groupMessageChat = groupMessageChats[indexPath.row]
+            
+            let cell = tableView.dequeueReusableCell(withIdentifier: K.Identifiers.groupChatCellIdentifier, for: indexPath) as! GroupChatCell
+            
+            cell.labelName.text = groupMessageChat.message
+            
+            print("Testing code starts from here")
+            if groupMessageChat.senderID == Auth.auth().currentUser?.uid {
+                print(Auth.auth().currentUser?.uid ?? "No id")
+                cell.leftImageView.isHidden = true
+                cell.rightImageView.isHidden = false
+                cell.messageBubble.backgroundColor = UIColor(
                     red: CGFloat(160) / 255.0,
                     green: CGFloat(214) / 255.0,
                     blue: CGFloat(131) / 255.0,
                     alpha: 1.0
                 )
+            } else {
+                cell.leftImageView.isHidden = false
+                cell.rightImageView.isHidden = true
+                cell.messageBubble.backgroundColor = UIColor(
+                    red: CGFloat(114) / 255.0,
+                    green: CGFloat(191) / 255.0,
+                    blue: CGFloat(120) / 255.0,
+                    alpha: 1.0
+                )
+            }
+            return cell
         } else {
-            cell.leftImageView.isHidden = false
-            cell.rightImageView.isHidden = true
-            cell.messageBubble.backgroundColor = UIColor(
-                red: CGFloat(114) / 255.0,
-                green: CGFloat(191) / 255.0,
-                blue: CGFloat(120) / 255.0,
-                alpha: 1.0
-            )
+            return UITableViewCell()
         }
-        return cell
     }
 }

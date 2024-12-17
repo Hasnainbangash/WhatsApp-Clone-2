@@ -251,7 +251,6 @@ extension ChatScreenViewController: UITableViewDataSource {
                 }
                 return cell
             } else {
-                // If the index is out of bounds, return a blank or default cell to avoid crashes
                 return UITableViewCell()
             }
         }
