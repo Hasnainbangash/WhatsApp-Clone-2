@@ -44,9 +44,6 @@ class RegisterViewController: UIViewController {
     func saveUserNameToFirestore(userId: String, name: String) {
         if let senderEmail = Auth.auth().currentUser?.email {
             // Sending the user's name and email to Firestore
-            
-//            db.collection(K.FStore.collectionName).document(userId).setData(userId)
-            
             db.collection(K.FStore.userCollection).addDocument(data: [
                 K.FStore.senderNameField: name,
                 K.FStore.emailField: senderEmail,
@@ -59,20 +56,11 @@ class RegisterViewController: UIViewController {
                     print("Successfully saved user's name to Firestore.")
                 }
             }
-            
-//            db.collection(K.FStore.collectionName).document(userId).setData([
-//                K.FStore.senderField: name,
-//                K.FStore.emailField: emailSender,
-//                K.FStore.userIDField: userId,
-//                K.FStore.dateField: Date().timeIntervalSince1970
-//            ]) { error in
-//                if let e = error {
-//                    print("There was an issue saving data to Firestore, \(e)")
-//                } else {
-//                    print("Successfully saved user's name to Firestore.")
-//                }
-//            }
         }
+    }
+    
+    func saveUserNameToCoreData() {
+        
     }
     
 }
