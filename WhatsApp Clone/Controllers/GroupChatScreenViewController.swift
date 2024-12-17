@@ -98,8 +98,6 @@ class GroupChatScreenViewController: UIViewController {
     }
     
     func loadMessages() {
-        let senderID = Auth.auth().currentUser?.uid ?? "Nil"
-        
         fetchMessagesFromFirestore()
         
         if groupMessageChats.isEmpty {
