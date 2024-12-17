@@ -8,13 +8,17 @@
 import UIKit
 import FirebaseAuth
 import FirebaseFirestore
+import CoreData
 
 class ChatScreenViewController: UIViewController {
-
+    
     @IBOutlet weak var chatTableView: UITableView!
     @IBOutlet weak var messageTextfield: UITextField!
     
     let db = Firestore.firestore()
+    
+    // Reference to Imanaged object context
+    let context = PersistentStorage.shared.context
     
     var titleName  = ""
     var recieverID = ""
@@ -23,7 +27,7 @@ class ChatScreenViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         // Do any additional setup after loading the view.
         chatTableView.dataSource = self
         
@@ -36,7 +40,44 @@ class ChatScreenViewController: UIViewController {
         loadMessages()
     }
     
-    func loadMessages() {
+    // Fetch messages from Core Data
+    func fetchMessagesFromCoreData(senderID: String, receiverID: String) {
+        do {
+            let request = Messages.fetchRequest() as NSFetchRequest<Messages>
+            let pred = NSPredicate(format: "(senderID == %@ AND receiverID == %@) OR (senderID == %@ AND receiverID == %@)", senderID, receiverID, receiverID, senderID)
+            let sort = NSSortDescriptor(key: "date", ascending: true)
+            
+            request.predicate = pred
+            request.sortDescriptors = [sort]
+            
+            let messages = try PersistentStorage.shared.context.fetch(request)
+            messageChats = messages.map { MessageChat(senderID: $0.senderID!, recieverID: $0.receiverID!, message: $0.message!) }
+            
+            DispatchQueue.main.async {
+                self.chatTableView.reloadData()
+                
+                if self.messageChats.count > 0 {
+                    let indexPath = IndexPath(row: self.messageChats.count - 1, section: 0)
+                    self.chatTableView.scrollToRow(at: indexPath, at: .top, animated: true)
+                }
+            }
+        } catch {
+            print("Error fetching messages from Core Data: \(error)")
+        }
+    }
+    
+    // Saving the messages to Core Data
+    func saveMessageToCoreData(senderID: String, receiverID: String, message: String) {
+        let newMessage = Messages(context: self.context)
+        newMessage.senderID = senderID
+        newMessage.receiverID = receiverID
+        newMessage.message = message
+        newMessage.date = Date().timeIntervalSince1970
+        PersistentStorage.shared.saveContext()
+        print("Messages saved succesfully to the core data")
+    }
+    
+    func fetchMessagesFromFirestore() {
         // Modified Code
         let senderID = Auth.auth().currentUser?.uid ?? "Nil"
         
@@ -60,11 +101,14 @@ class ChatScreenViewController: UIViewController {
                                 if (data[K.FStore.senderID] as? String == senderID && data[K.FStore.recieverID] as? String == self.recieverID) || (data[K.FStore.recieverID] as? String == senderID && data[K.FStore.senderID] as? String == self.recieverID) {
                                     
                                     self.messageChats.append(newMessage)
+                                    
+                                    // Saving the messages to the core data
+                                    self.saveMessageToCoreData(senderID: senderID, receiverID: self.recieverID, message: messageBody)
                                 }
                             }
                         }
                     }
-
+                    
                     DispatchQueue.main.async {
                         self.chatTableView.reloadData()
                         
@@ -77,6 +121,18 @@ class ChatScreenViewController: UIViewController {
             }
     }
     
+    func loadMessages() {
+        let senderID = Auth.auth().currentUser?.uid ?? "Nil"
+        
+        fetchMessagesFromFirestore()
+        
+        // Here checking if the corw data is empty than fetch from the firestore
+        if messageChats.isEmpty {
+            // Fetching the data from the core data
+            fetchMessagesFromCoreData(senderID: senderID, receiverID: recieverID)
+        }
+    }
+    
     @IBAction func sendPressed(_ sender: UIButton) {
         
         // Modified Code
@@ -86,31 +142,31 @@ class ChatScreenViewController: UIViewController {
                 .document("All User Messages")
                 .collection("sender_receiver:\([senderID, recieverID].sorted())")
                 .addDocument(data: [
-                K.FStore.senderID: senderID,
-                K.FStore.recieverID: recieverID,
-                K.FStore.messageField: messageBody,
-                K.FStore.dateField: Date().timeIntervalSince1970
-            ]) { error in
-                if let e = error {
-                    print("There was an issue saving messages to firestore, \(e)")
-                } else {
-                    print("Successfully saved data.")
-                    
-                    self.loadMessages()
-                    
-                    print("Id before update current user")
-                    print("Sender id is: \(senderID)")
-                    print("Receiver id is: \(self.recieverID)")
-                    
-                    self.updateCurrentUsers(messageBody: messageBody, senderID: senderID, recieverID: self.recieverID)
-                    
-                    // Setting the text field to empty after clicking the send button
-                    DispatchQueue.main.async {
-                        self.messageTextfield.text = ""
+                    K.FStore.senderID: senderID,
+                    K.FStore.recieverID: recieverID,
+                    K.FStore.messageField: messageBody,
+                    K.FStore.dateField: Date().timeIntervalSince1970
+                ]) { error in
+                    if let e = error {
+                        print("There was an issue saving messages to firestore, \(e)")
+                    } else {
+                        print("Successfully saved data.")
+                        
+                        self.loadMessages()
+                        
+                        print("Id before update current user")
+                        print("Sender id is: \(senderID)")
+                        print("Receiver id is: \(self.recieverID)")
+                        
+                        self.updateCurrentUsers(messageBody: messageBody, senderID: senderID, recieverID: self.recieverID)
+                        
+                        // Setting the text field to empty after clicking the send button
+                        DispatchQueue.main.async {
+                            self.messageTextfield.text = ""
+                        }
+                        print("merge the loading of two chats")
                     }
-                    print("merge the loading of two chats")
                 }
-            }
         }
     }
     
@@ -125,16 +181,16 @@ class ChatScreenViewController: UIViewController {
             .collection(K.FStore.recentChats)
             .document(recieverID)
             .setData ([
-            K.FStore.recieverID: recieverID,
-            K.FStore.messageField: messageBody,
-            K.FStore.dateField: Date().timeIntervalSince1970
-        ]) { error in
-            if let error = error {
-                print("Error updating user's recent chat: \(error)")
-            } else {
-                print("Successfully updated user's recent chat.")
+                K.FStore.recieverID: recieverID,
+                K.FStore.messageField: messageBody,
+                K.FStore.dateField: Date().timeIntervalSince1970
+            ]) { error in
+                if let error = error {
+                    print("Error updating user's recent chat: \(error)")
+                } else {
+                    print("Successfully updated user's recent chat.")
+                }
             }
-        }
         
         // Saving data to reciever user recent chat
         db.collection(K.FStore.userCollection)
@@ -142,16 +198,16 @@ class ChatScreenViewController: UIViewController {
             .collection(K.FStore.recentChats)
             .document(senderID)
             .setData ([
-            K.FStore.recieverID: senderID,
-            K.FStore.messageField: messageBody,
-            K.FStore.dateField: Date().timeIntervalSince1970
-        ]) { error in
-            if let error = error {
-                print("Error updating user's recent chat: \(error)")
-            } else {
-                print("Successfully updated user's recent chat.")
+                K.FStore.recieverID: senderID,
+                K.FStore.messageField: messageBody,
+                K.FStore.dateField: Date().timeIntervalSince1970
+            ]) { error in
+                if let error = error {
+                    print("Error updating user's recent chat: \(error)")
+                } else {
+                    print("Successfully updated user's recent chat.")
+                }
             }
-        }
     }
 }
 
@@ -161,31 +217,42 @@ extension ChatScreenViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let messageChat = messageChats[indexPath.row]
-        
-        let cell = tableView.dequeueReusableCell(withIdentifier: K.Identifiers.chatCellIdentifier, for: indexPath) as! ChatCell
-        
-        cell.labelName.text = messageChat.message
-        
-        if messageChat.senderID == Auth.auth().currentUser?.uid {
-            cell.leftImageView.isHidden = true
-            cell.rightImageView.isHidden = false
-            cell.messageBubble.backgroundColor = UIColor(
-                    red: CGFloat(160) / 255.0,
-                    green: CGFloat(214) / 255.0,
-                    blue: CGFloat(131) / 255.0,
-                    alpha: 1.0
-                )
-        } else {
-            cell.leftImageView.isHidden = false
-            cell.rightImageView.isHidden = true
-            cell.messageBubble.backgroundColor = UIColor(
-                red: CGFloat(114) / 255.0,
-                green: CGFloat(191) / 255.0,
-                blue: CGFloat(120) / 255.0,
-                alpha: 1.0
-            )
+            
+            // Check if the index is within bounds of the messageChats array
+            if indexPath.row < messageChats.count {
+                let messageChat = messageChats[indexPath.row]
+                
+                // Dequeue the cell
+                let cell = tableView.dequeueReusableCell(withIdentifier: K.Identifiers.chatCellIdentifier, for: indexPath) as! ChatCell
+                
+                // Set up the cell
+                cell.labelName.text = messageChat.message
+                
+                if messageChat.senderID == Auth.auth().currentUser?.uid {
+                    // This is the sender's message
+                    cell.leftImageView.isHidden = true
+                    cell.rightImageView.isHidden = false
+                    cell.messageBubble.backgroundColor = UIColor(
+                        red: CGFloat(160) / 255.0,
+                        green: CGFloat(214) / 255.0,
+                        blue: CGFloat(131) / 255.0,
+                        alpha: 1.0
+                    )
+                } else {
+                    // This is the receiver's message
+                    cell.leftImageView.isHidden = false
+                    cell.rightImageView.isHidden = true
+                    cell.messageBubble.backgroundColor = UIColor(
+                        red: CGFloat(114) / 255.0,
+                        green: CGFloat(191) / 255.0,
+                        blue: CGFloat(120) / 255.0,
+                        alpha: 1.0
+                    )
+                }
+                return cell
+            } else {
+                // If the index is out of bounds, return a blank or default cell to avoid crashes
+                return UITableViewCell()
+            }
         }
-        return cell
-    }
 }
