@@ -71,5 +71,6 @@ class RegisterViewController: UIViewController {
         newUser.date = Date().timeIntervalSince1970
         
         PersistentStorage.shared.saveContext()
+        print("Registered user data is saved succesfully to the Core data")
     }
 }
