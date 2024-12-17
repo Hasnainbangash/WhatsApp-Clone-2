@@ -126,7 +126,7 @@ class ChatScreenViewController: UIViewController {
         
         fetchMessagesFromFirestore()
         
-        // Here checking if the corw data is empty than fetch from the firestore
+        // Here checking if there is no internet connection and the model array is empty than fetch messages from the core data
         if messageChats.isEmpty {
             // Fetching the data from the core data
             fetchMessagesFromCoreData(senderID: senderID, receiverID: recieverID)
