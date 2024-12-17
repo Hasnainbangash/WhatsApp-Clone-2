@@ -59,6 +59,7 @@ class GroupChatScreenViewController: UIViewController {
         newMessage.date = Date().timeIntervalSince1970
         
         PersistentStorage.shared.saveContext()
+        print("group messages saved succesfully to core data")
     }
     
     func fetchMessagesFromFirestore() {
@@ -97,7 +98,14 @@ class GroupChatScreenViewController: UIViewController {
     }
     
     func loadMessages() {
+        let senderID = Auth.auth().currentUser?.uid ?? "Nil"
         
+        fetchMessagesFromFirestore()
+        
+        if groupMessageChats.isEmpty {
+            // Fetching the data from the core data
+            fetchMessagesFromCoreData()
+        }
     }
     
     @IBAction func sendPressed(_ sender: UIButton) {
