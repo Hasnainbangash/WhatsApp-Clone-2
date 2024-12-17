@@ -56,7 +56,7 @@ class HomeScreenViewController: UIViewController {
                         for doc in snapshotDocuments {
                             print("Function get run")
                             let data = doc.data()
-
+                            
                             if let receiverID = data[K.FStore.recieverID] as? String {
                                 
                                 // Here defining closure body
@@ -76,7 +76,7 @@ class HomeScreenViewController: UIViewController {
     
     func gettingNameOfReceiverID(for id: String, gettingName: @escaping (String) -> Void) {
         
-//        let db = Firestore.firestore()
+        //        let db = Firestore.firestore()
         
         var receiverName = ""
         
@@ -144,13 +144,13 @@ class HomeScreenViewController: UIViewController {
                 }
             }
     }
- 
+    
     @IBAction func logOutPressed(_ sender: UIBarButtonItem) {
         do {
-          try Auth.auth().signOut()
+            try Auth.auth().signOut()
             navigationController?.popToRootViewController(animated: true)
         } catch let signOutError as NSError {
-          print("Error signing out: %@", signOutError)
+            print("Error signing out: %@", signOutError)
         }
     }
     
@@ -176,6 +176,58 @@ extension HomeScreenViewController: UITableViewDataSource {
 }
 
 extension HomeScreenViewController: UITableViewDelegate {
+    
+    // Handle the swipe action to delete a chat or group
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        
+        let homeChat = homeChats[indexPath.row]
+        
+        let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { _, _, completionHandler in
+            
+            if homeChat.type == ChatsType.simpleChat {
+                self.deleteChat(chatID: homeChat.id)
+                
+            } else if homeChat.type == ChatsType.groupChat {
+                self.deleteGroup(groupID: homeChat.id)
+            }
+            
+            self.homeChats.remove(at: indexPath.row)
+            self.homeTableView.deleteRows(at: [indexPath], with: .automatic)
+        }
+        
+        return UISwipeActionsConfiguration(actions: [deleteAction])
+    }
+    
+    // Here deleting the simple chat
+    func deleteChat(chatID: String) {
+        
+        let authUserID = Auth.auth().currentUser?.uid ?? "Nil"
+        
+        db.collection(K.FStore.userCollection)
+            .document(authUserID)
+            .collection(K.FStore.recentChats)
+            .document(chatID)
+            .delete { error in
+                if let e = error {
+                    print("Error deleting chat: \(e.localizedDescription)")
+                } else {
+                    print("Chat deleted successfully")
+                }
+            }
+    }
+    
+    // Here deleteing the group chat
+    func deleteGroup(groupID: String) {
+        db.collection(K.FStore.groupCollection)
+            .document(groupID)
+            .delete { error in
+                if let e = error {
+                    print("Error deleting group: \(e.localizedDescription)")
+                } else {
+                    print("Group deleted successfully")
+                }
+            }
+    }
     
     // Handle cell selection and perform segue
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
