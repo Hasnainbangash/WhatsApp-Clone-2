@@ -17,6 +17,9 @@ class RegisterViewController: UIViewController {
     
     let db = Firestore.firestore()
     
+    // Reference to Imanaged object context
+    let context = PersistentStorage.shared.context
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -54,13 +57,13 @@ class RegisterViewController: UIViewController {
                     print("There was an issue saving data to Firestore, \(e)")
                 } else {
                     print("Successfully saved user's name to Firestore.")
+                    self.saveUserToCoreData(name: name, email: senderEmail, userId: userId)
                 }
             }
         }
     }
     
-    func saveUserNameToCoreData() {
+    func saveUserToCoreData(name: String, email: String, userId: String) {
         
     }
-    
 }
