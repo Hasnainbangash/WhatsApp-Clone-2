@@ -4,6 +4,6 @@
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="email" optional="YES" attributeType="String"/>
         <attribute name="senderName" optional="YES" attributeType="String"/>
-        <attribute name="userID" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="userID" optional="YES" attributeType="String"/>
     </entity>
 </model>

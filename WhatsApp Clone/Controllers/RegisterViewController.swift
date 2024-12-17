@@ -64,6 +64,12 @@ class RegisterViewController: UIViewController {
     }
     
     func saveUserToCoreData(name: String, email: String, userId: String) {
+        let newUser = User(context: self.context)
+        newUser.senderName = name
+        newUser.email = email
+        newUser.userID = userId
+        newUser.date = Date()
         
+        PersistentStorage.shared.saveContext()
     }
 }

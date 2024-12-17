@@ -19,6 +19,6 @@ extension User {
     @NSManaged public var date: Date?
     @NSManaged public var email: String?
     @NSManaged public var senderName: String?
-    @NSManaged public var userID: UUID?
+    @NSManaged public var userID: String?
 
 }
