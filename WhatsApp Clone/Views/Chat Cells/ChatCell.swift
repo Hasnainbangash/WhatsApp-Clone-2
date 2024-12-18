@@ -13,11 +13,14 @@ class ChatCell: UITableViewCell {
     @IBOutlet weak var labelName: UILabel!
     @IBOutlet weak var leftImageView: UIImageView!
     @IBOutlet weak var rightImageView: UIImageView!
-    
+    @IBOutlet weak var rightCheckBoxImageView: UIImageView!
     
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code
+        
+        rightCheckBoxImageView.isHidden = true
+        
         messageBubble.layer.cornerRadius = messageBubble.frame.size.height / 5
         
         // Rounding the image

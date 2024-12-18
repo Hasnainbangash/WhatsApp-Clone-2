@@ -17,21 +17,21 @@
                 <rect key="frame" x="0.0" y="0.0" width="354" height="68"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <stackView opaque="NO" contentMode="scaleToFill" alignment="top" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="P9a-bq-Kql">
+                    <stackView opaque="NO" contentMode="scaleToFill" alignment="center" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="P9a-bq-Kql">
                         <rect key="frame" x="10" y="10" width="334" height="48"/>
                         <subviews>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Picture 1" translatesAutoresizingMaskIntoConstraints="NO" id="ve6-pR-p5W">
-                                <rect key="frame" x="0.0" y="0.0" width="40" height="40"/>
+                                <rect key="frame" x="0.0" y="4" width="40" height="40"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="40" id="D1u-9R-UOs"/>
                                     <constraint firstAttribute="height" constant="40" id="ZTi-KT-kAd"/>
                                 </constraints>
                             </imageView>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="K3a-vf-cCh">
-                                <rect key="frame" x="60" y="0.0" width="214" height="48"/>
+                                <rect key="frame" x="60" y="0.0" width="164" height="48"/>
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="T8B-fc-K2t">
-                                        <rect key="frame" x="10" y="10" width="194" height="28"/>
+                                        <rect key="frame" x="10" y="10" width="144" height="28"/>
                                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                         <color key="textColor" red="0.10980392160000001" green="0.49803921569999998" blue="0.32549019610000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         <nil key="highlightedColor"/>
@@ -46,10 +46,17 @@
                                 </constraints>
                             </view>
                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="Picture 2" translatesAutoresizingMaskIntoConstraints="NO" id="y8m-Td-xA9">
-                                <rect key="frame" x="294" y="0.0" width="40" height="40"/>
+                                <rect key="frame" x="244" y="4" width="40" height="40"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="40" id="t66-Wb-wEa"/>
                                     <constraint firstAttribute="width" constant="40" id="wKs-ca-TKB"/>
+                                </constraints>
+                            </imageView>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="circle" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="AhA-th-Zrz">
+                                <rect key="frame" x="304" y="9.6666666666666661" width="30" height="28.666666666666671"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="30" id="dAG-c6-viX"/>
+                                    <constraint firstAttribute="height" constant="30" id="xfQ-rb-Zah"/>
                                 </constraints>
                             </imageView>
                         </subviews>
@@ -67,6 +74,7 @@
                 <outlet property="labelName" destination="T8B-fc-K2t" id="UF5-Bz-rso"/>
                 <outlet property="leftImageView" destination="ve6-pR-p5W" id="V27-nF-wt3"/>
                 <outlet property="messageBubble" destination="K3a-vf-cCh" id="RFj-Mx-qil"/>
+                <outlet property="rightCheckBoxImageView" destination="AhA-th-Zrz" id="Igg-yd-1ZZ"/>
                 <outlet property="rightImageView" destination="y8m-Td-xA9" id="HiG-nz-0xw"/>
             </connections>
             <point key="canvasLocation" x="56.488549618320612" y="28.169014084507044"/>
@@ -75,6 +83,7 @@
     <resources>
         <image name="Picture 1" width="75" height="75"/>
         <image name="Picture 2" width="75" height="75"/>
+        <image name="circle" catalog="system" width="128" height="123"/>
         <namedColor name="BrandPurple">
             <color red="0.32899999618530273" green="0.32400000095367432" blue="0.4779999852180481" alpha="0.33000001311302185" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>

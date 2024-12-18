@@ -286,6 +286,8 @@ extension ChatScreenViewController: UITableViewDelegate {
         print("Row \(indexPath.row) selected")
         
         if let cell = tableView.cellForRow(at: indexPath) as? ChatCell {
+            cell.rightCheckBoxImageView.isHidden = false
+            cell.rightCheckBoxImageView.image = UIImage(systemName: "checkmark.circle.fill")
             deleteBarButton.isHidden = false
             print("I got selected")
         } else {
@@ -300,6 +302,7 @@ extension ChatScreenViewController: UITableViewDelegate {
         
         if let cell = tableView.cellForRow(at: indexPath) as? ChatCell {
 //            deleteBarButton.isHidden = false
+            cell.rightCheckBoxImageView.image = UIImage(systemName: "circle")
             print("I got deselected")
         } else {
             print("I wont get deseelcted")
@@ -308,6 +311,9 @@ extension ChatScreenViewController: UITableViewDelegate {
         // Checking if all the selected rows are nil or not
         if tableView.indexPathsForSelectedRows == nil {
             deleteBarButton.isHidden = true
+            if let cell = tableView.cellForRow(at: indexPath) as? ChatCell {
+                cell.rightCheckBoxImageView.isHidden = true
+            }
         }
         
     }
