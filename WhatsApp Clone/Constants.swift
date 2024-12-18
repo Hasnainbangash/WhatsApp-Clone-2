@@ -53,6 +53,7 @@ struct K {
         static let bodyField = "body"
         static let messageField = "message"
         static let dateField = "date"
+        static let messageIDField = "messageID"
         static let groupNameField = "GroupName"
     }
 }
