@@ -376,9 +376,12 @@
                             <constraint firstItem="E72-CU-fXZ" firstAttribute="leading" secondItem="fA8-4D-lQX" secondAttribute="leading" id="vW7-Kk-OUY"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" id="xNH-Xc-I9k"/>
+                    <navigationItem key="navigationItem" id="xNH-Xc-I9k">
+                        <barButtonItem key="rightBarButtonItem" title="Delete" id="asp-Gn-FPr"/>
+                    </navigationItem>
                     <connections>
                         <outlet property="chatTableView" destination="E72-CU-fXZ" id="XMN-Cd-vNR"/>
+                        <outlet property="deleteBarButton" destination="asp-Gn-FPr" id="Kmm-h5-Upc"/>
                         <outlet property="messageTextfield" destination="keC-Qh-W2Q" id="bXB-48-GgD"/>
                     </connections>
                 </viewController>

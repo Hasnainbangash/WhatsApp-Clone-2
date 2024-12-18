@@ -14,6 +14,7 @@ class ChatScreenViewController: UIViewController {
     
     @IBOutlet weak var chatTableView: UITableView!
     @IBOutlet weak var messageTextfield: UITextField!
+    @IBOutlet weak var deleteBarButton: UIBarButtonItem!
     
     let db = Firestore.firestore()
     
@@ -29,6 +30,9 @@ class ChatScreenViewController: UIViewController {
         super.viewDidLoad()
         
         // Do any additional setup after loading the view.
+        
+        deleteBarButton.isHidden = true
+        
         chatTableView.dataSource = self
         
         title = titleName
