@@ -24,6 +24,8 @@ class HomeScreenViewController: UIViewController {
     // Array to store chat data
     var homeChats: [HomeChats] = []
     
+    var deletedChatsBy: [DeletedChatsBy] = []
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -202,6 +204,10 @@ extension HomeScreenViewController: UITableViewDelegate {
     func deleteChat(chatID: String) {
         
         let senderID = Auth.auth().currentUser?.uid ?? "Nil"
+        
+        let chatDeletedByUser = DeletedChatsBy(id: senderID)
+        deletedChatsBy.append(chatDeletedByUser)
+        print("The user who delete the chat is successfully saved")
         
         db.collection(K.FStore.messageCollection)
             .document("All User Messages")
