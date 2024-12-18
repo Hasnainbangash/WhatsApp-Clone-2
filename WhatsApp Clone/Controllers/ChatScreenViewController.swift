@@ -34,6 +34,7 @@ class ChatScreenViewController: UIViewController {
         deleteBarButton.isHidden = true
         
         chatTableView.dataSource = self
+        chatTableView.delegate = self
         
         title = titleName
         
@@ -258,4 +259,37 @@ extension ChatScreenViewController: UITableViewDataSource {
                 return UITableViewCell()
             }
         }
+}
+
+extension ChatScreenViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        print("Row \(indexPath.row) selected")
+        
+        if let cell = tableView.cellForRow(at: indexPath) as? ChatCell {
+            deleteBarButton.isHidden = false
+            print("I got selected")
+        } else {
+            print("I wont get selected")
+        }
+        
+    }
+    
+    func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+        
+        print("Row \(indexPath.row) selected")
+        
+        if let cell = tableView.cellForRow(at: indexPath) as? ChatCell {
+//            deleteBarButton.isHidden = false
+            print("I got deselected")
+        } else {
+            print("I wont get deseelcted")
+        }
+        
+        // Checking if all the selected rows are nil or not
+        if tableView.indexPathsForSelectedRows == nil {
+            deleteBarButton.isHidden = true
+        }
+        
+    }
 }
