@@ -201,17 +201,27 @@ extension HomeScreenViewController: UITableViewDelegate {
     // Here deleting the simple chat
     func deleteChat(chatID: String) {
         
-        let authUserID = Auth.auth().currentUser?.uid ?? "Nil"
+        let senderID = Auth.auth().currentUser?.uid ?? "Nil"
         
-        db.collection(K.FStore.userCollection)
-            .document(authUserID)
-            .collection(K.FStore.recentChats)
-            .document(chatID)
-            .delete { error in
+        db.collection(K.FStore.messageCollection)
+            .document("All User Messages")
+            .collection("sender_receiver:\([senderID, recieverID].sorted())")
+            .getDocuments { querySnapshot, error in
                 if let e = error {
-                    print("Error deleting chat: \(e.localizedDescription)")
+                    print("There was an issue deleteting data from Firestore: \(e)")
                 } else {
-                    print("Chat deleted successfully")
+                    if let snapshotDocuments = querySnapshot?.documents {
+                        for doc in snapshotDocuments {
+                            let data = doc.data()
+                            doc.reference.delete { error in
+                                if let e = error {
+                                    print("Error deleting chats: \(e.localizedDescription)")
+                                } else {
+                                    print("Chats deleted successfully")
+                                }
+                            }
+                        }
+                    }
                 }
             }
     }
