@@ -377,7 +377,11 @@
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="xNH-Xc-I9k">
-                        <barButtonItem key="rightBarButtonItem" title="Delete" id="asp-Gn-FPr"/>
+                        <barButtonItem key="rightBarButtonItem" title="Delete" id="asp-Gn-FPr">
+                            <connections>
+                                <action selector="deletePressed:" destination="BzU-BR-xTh" id="6Sp-Mq-qqW"/>
+                            </connections>
+                        </barButtonItem>
                     </navigationItem>
                     <connections>
                         <outlet property="chatTableView" destination="E72-CU-fXZ" id="XMN-Cd-vNR"/>
