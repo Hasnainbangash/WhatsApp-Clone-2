@@ -82,11 +82,11 @@ class GroupChatScreenViewController: UIViewController {
                         for doc in snapshotDocuments {
                             let data = doc.data()
                             
-                            // Check if message is deleted by current user
+                            // Checking if the message is deleted by current user or not
                             let deletedByArray = data[K.FStore.deletedByIDField] as? [String] ?? []
                             let currentUserID = Auth.auth().currentUser?.uid ?? ""
                             
-                            // Only show message if not deleted by current user
+                            // Only showing that messages that are not deleted by current user
                             if !deletedByArray.contains(currentUserID) {
                                 if let messageBody = data[K.FStore.messageField] as? String,
                                    let messageId = data[K.FStore.senderID] as? String {
@@ -112,10 +112,10 @@ class GroupChatScreenViewController: UIViewController {
     func loadMessages() {
         fetchMessagesFromFirestore()
         
-//        if groupMessageChats.isEmpty {
-//            // Fetching the data from the core data
-//            fetchMessagesFromCoreData()
-//        }
+        //        if groupMessageChats.isEmpty {
+        //            // Fetching the data from the core data
+        //            fetchMessagesFromCoreData()
+        //        }
     }
     
     
@@ -142,7 +142,17 @@ class GroupChatScreenViewController: UIViewController {
                                 K.FStore.deletedByIDField: [currentUserID]
                             ])
                         }
+                    }
+                
+                if let cell = self.groupChatTableView.cellForRow(at: indexPath) as? GroupChatCell {
+                    cell.rightCheckBoxImageView.isHidden = true
                 }
+                
+            }
+            
+            // Deselect all selected rows
+            selectedRows.forEach { indexPath in
+                self.groupChatTableView.deselectRow(at: indexPath, animated: true)
             }
             
             // Reset UI
@@ -253,7 +263,7 @@ extension GroupChatScreenViewController: UITableViewDelegate {
         print("Row \(indexPath.row) selected")
         
         if let cell = tableView.cellForRow(at: indexPath) as? GroupChatCell {
-//            deleteBarButton.isHidden = false
+            //            deleteBarButton.isHidden = false
             cell.rightCheckBoxImageView.image = UIImage(systemName: "circle")
             print("I got deselected")
         } else {
