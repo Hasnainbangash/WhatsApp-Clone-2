@@ -100,7 +100,7 @@ class ChatScreenViewController: UIViewController {
                             let data = doc.data()
                             
                             // Check if message is deleted by current user
-                            let deletedByArray = data["deletedByIDField"] as? [String] ?? []
+                            let deletedByArray = data[K.FStore.deletedByIDField] as? [String] ?? []
                             
                             // Only show message if not deleted by current user
                             if !deletedByArray.contains(senderID) {
@@ -141,21 +141,15 @@ class ChatScreenViewController: UIViewController {
     @IBAction func deletePressed(_ sender: Any) {
         let alert = UIAlertController(title: "Delete", message: "Are you sure you want to delete?", preferredStyle: .alert)
         
-        let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { [weak self] (_) in
-            guard let self = self,
-                  let currentUserID = Auth.auth().currentUser?.uid,
-                  let selectedRows = self.chatTableView.indexPathsForSelectedRows else { return }
-            
-//            let messagesRef = self.db.collection(K.FStore.messageCollection)
-//                .document("All User Messages")
-//                .collection("sender_receiver:\([currentUserID, self.recieverID].sorted())")
+        let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { _ in
+            guard let currentUserID = Auth.auth().currentUser?.uid, let selectedRows = self.chatTableView.indexPathsForSelectedRows else { return }
             
             // For each selected message
             for indexPath in selectedRows {
                 let message = self.messageChats[indexPath.row]
                 
                 // Find and update the message in Firestore
-                db.collection(K.FStore.messageCollection)
+                self.db.collection(K.FStore.messageCollection)
                     .document("All User Messages")
                     .collection("sender_receiver:\([currentUserID, self.recieverID].sorted())")
                     .whereField(K.FStore.messageField, isEqualTo: message.message)
@@ -163,7 +157,7 @@ class ChatScreenViewController: UIViewController {
                         if let document = snapshot?.documents.first {
                             // Add current user's ID to deletedByIDField
                             document.reference.updateData([
-                                "deletedByIDField": [currentUserID]
+                                K.FStore.deletedByIDField: [currentUserID]
                             ])
                         }
                 }
@@ -194,7 +188,6 @@ class ChatScreenViewController: UIViewController {
                     K.FStore.senderID: senderID,
                     K.FStore.recieverID: recieverID,
                     K.FStore.messageField: messageBody,
-                    K.FStore.deletedByIDFieldArray: [],
                     K.FStore.dateField: Date().timeIntervalSince1970
                 ]) { error in
                     if let e = error {
