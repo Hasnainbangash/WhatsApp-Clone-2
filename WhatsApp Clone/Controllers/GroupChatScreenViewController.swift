@@ -31,6 +31,7 @@ class GroupChatScreenViewController: UIViewController {
         
         // Do any additional setup after loading the view.
         groupChatTableView.dataSource = self
+        groupChatTableView.delegate = self
         
         deleteBarButton.isHidden = true
         
@@ -185,5 +186,44 @@ extension GroupChatScreenViewController: UITableViewDataSource {
         } else {
             return UITableViewCell()
         }
+    }
+}
+
+extension GroupChatScreenViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        print("Row \(indexPath.row) selected")
+        
+        if let cell = tableView.cellForRow(at: indexPath) as? GroupChatCell {
+            cell.rightCheckBoxImageView.isHidden = false
+            cell.rightCheckBoxImageView.image = UIImage(systemName: "checkmark.circle.fill")
+            deleteBarButton.isHidden = false
+            print("I got selected")
+        } else {
+            print("I won't get selected")
+        }
+        
+    }
+    
+    func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+        
+        print("Row \(indexPath.row) selected")
+        
+        if let cell = tableView.cellForRow(at: indexPath) as? GroupChatCell {
+//            deleteBarButton.isHidden = false
+            cell.rightCheckBoxImageView.image = UIImage(systemName: "circle")
+            print("I got deselected")
+        } else {
+            print("I wont get deseelcted")
+        }
+        
+        // Checking if all the selected rows are nil or not
+        if tableView.indexPathsForSelectedRows == nil {
+            deleteBarButton.isHidden = true
+            if let cell = tableView.cellForRow(at: indexPath) as? GroupChatCell {
+                cell.rightCheckBoxImageView.isHidden = true
+            }
+        }
+        
     }
 }
