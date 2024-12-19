@@ -20,12 +20,12 @@
                                 <rect key="frame" x="81" y="237.33333333333334" width="240" height="399.66666666666663"/>
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Welcome to WhatsApp" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="7mU-ec-0Nw">
-                                        <rect key="frame" x="33" y="0.0" width="174" height="50"/>
+                                        <rect key="frame" x="19.666666666666671" y="0.0" width="200.66666666666663" height="50"/>
                                         <constraints>
                                             <constraint firstAttribute="height" constant="50" id="xFH-K0-Bc5"/>
                                         </constraints>
-                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                        <color key="textColor" red="0.06431454784" green="0.78039215689999997" blue="0.34901960780000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="20"/>
+                                        <color key="textColor" red="0.062745098039215685" green="0.78039215689999997" blue="0.34901960780000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         <nil key="highlightedColor"/>
                                     </label>
                                     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="WhatsApp Design Image" translatesAutoresizingMaskIntoConstraints="NO" id="Bjs-fa-CPC">
@@ -190,7 +190,9 @@
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="b3P-Tu-nPz">
                                         <rect key="frame" x="109.66666666666666" y="275" width="87" height="42.333333333333314"/>
                                         <state key="normal" title="Button"/>
-                                        <buttonConfiguration key="configuration" style="plain" title="Register"/>
+                                        <buttonConfiguration key="configuration" style="plain" title="Register">
+                                            <color key="baseForegroundColor" red="0.062745098039215685" green="0.78039215689999997" blue="0.34901960780000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        </buttonConfiguration>
                                         <connections>
                                             <action selector="registerPressed:" destination="MmT-UT-H5o" eventType="touchUpInside" id="yfz-Hf-ZuK"/>
                                         </connections>
