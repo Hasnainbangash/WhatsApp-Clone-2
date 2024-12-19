@@ -24,7 +24,7 @@ class HomeScreenViewController: UIViewController {
     // Array to store chat data
     var homeChats: [HomeChats] = []
     
-    var deletedChatsBy: [DeletedChatsBy] = []
+    var deletedChatsBy: [String] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -231,36 +231,57 @@ extension HomeScreenViewController: UITableViewDelegate {
     }
     
     // Here deleting the simple chat
-    func deleteChat(chatID: String) {
-        
-        let senderID = Auth.auth().currentUser?.uid ?? "Nil"
-        
-        let chatDeletedByUser = DeletedChatsBy(id: senderID)
-        deletedChatsBy.append(chatDeletedByUser)
-        print("The user who delete the chat is successfully saved")
-        
-        db.collection(K.FStore.messageCollection)
-            .document("All User Messages")
-            .collection("sender_receiver:\([senderID, recieverID].sorted())")
-            .getDocuments { querySnapshot, error in
-                if let e = error {
-                    print("There was an issue deleteting data from Firestore: \(e)")
-                } else {
-                    if let snapshotDocuments = querySnapshot?.documents {
-                        for doc in snapshotDocuments {
-                            let data = doc.data()
-                            doc.reference.delete { error in
-                                if let e = error {
-                                    print("Error deleting chats: \(e.localizedDescription)")
-                                } else {
-                                    print("Chats deleted successfully")
-                                }
+        func deleteChat(chatID: String) {
+            
+            let senderID = Auth.auth().currentUser?.uid ?? "Nil"
+            
+            let chatDeletedByUser = senderID
+            deletedChatsBy.append(chatDeletedByUser)
+            
+            print("The user who delete the chat is successfully saved")
+            
+            db.collection(K.FStore.messageCollection)
+                .document("All User Messages")
+                .collection("sender_receiver:\([senderID, recieverID].sorted())")
+                .getDocuments { querySnapshot, error in
+                    if let e = error {
+                        print("There was an issue deleteting data from Firestore: \(e)")
+                    } else {
+                        if let snapshotDocuments = querySnapshot?.documents {
+                            for doc in snapshotDocuments {
+                                let data = doc.data()
+                                let docID = doc.documentID
+                                
+                                // Update the document with the new 'deletedChatsBy' array
+                                self.db.collection(K.FStore.messageCollection)
+                                    .document("All User Messages")
+                                    .collection("sender_receiver:\([senderID, self.recieverID].sorted())")
+                                    .document(docID)
+                                    .updateData([K.FStore.deletedChatByIDField : self.deletedChatsBy]) { error in
+                                        if let e = error {
+                                            print("Error updating chat with deletedChatsBy: \(e.localizedDescription)")
+                                        } else {
+                                            print("Chat updated successfully with deletedChatsBy array")
+                                        }
+                                    }
                             }
                         }
                     }
                 }
-            }
-    }
+            
+            // delete feom the recent chats
+            db.collection(K.FStore.userCollection)
+                .document(senderID)
+                .collection(K.FStore.recentChats)
+                .document(chatID)
+                .delete { error in
+                    if let e = error {
+                        print(e.localizedDescription)
+                    } else {
+                        print("successfully deleted")
+                    }
+                }
+        }
     
     // Here deleteing the group chat
     func deleteGroup(groupID: String) {

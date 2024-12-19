@@ -56,6 +56,7 @@ struct K {
         static let messageIDField = "messageID"
         static let groupNameField = "GroupName"
         static let deletedByIDField = "deletedByIDField"
+        static let deletedChatByIDField = "deletedChatByIDField"
     }
 }
 
