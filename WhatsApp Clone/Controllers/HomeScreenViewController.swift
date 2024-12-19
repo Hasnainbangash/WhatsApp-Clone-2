@@ -113,7 +113,6 @@ class HomeScreenViewController: UIViewController {
             }
     }
     
-    
     func loadRecentGroups() {
         let currentUserID = Auth.auth().currentUser?.uid ?? "Nil"
         
@@ -257,7 +256,7 @@ extension HomeScreenViewController: UITableViewDelegate {
                                     .document("All User Messages")
                                     .collection("sender_receiver:\([senderID, self.recieverID].sorted())")
                                     .document(docID)
-                                    .updateData([K.FStore.deletedChatByIDField : self.deletedChatsBy]) { error in
+                                    .updateData([K.FStore.deletedByIDField : self.deletedChatsBy]) { error in
                                         if let e = error {
                                             print("Error updating chat with deletedChatsBy: \(e.localizedDescription)")
                                         } else {
