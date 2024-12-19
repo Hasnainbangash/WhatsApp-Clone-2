@@ -197,6 +197,8 @@ extension HomeScreenViewController: UITableViewDelegate {
                 let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { (action) in
                     print("DeleteButton pressed")
                     self.deleteChat(chatID: homeChat.id)
+                    self.homeChats.remove(at: indexPath.row)
+                    self.homeTableView.deleteRows(at: [indexPath], with: .automatic)
                 }
                 
                 let cancelButton = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
@@ -215,55 +217,53 @@ extension HomeScreenViewController: UITableViewDelegate {
         return nil
     }
     
-    // Here deleting the simple chat
         func deleteChat(chatID: String) {
+            let currentUserID = Auth.auth().currentUser?.uid ?? "Nil"
             
-            let senderID = Auth.auth().currentUser?.uid ?? "Nil"
-            
-            let chatDeletedByUser = senderID
-            deletedChatsBy.append(chatDeletedByUser)
-            
-            print("The user who delete the chat is successfully saved")
-            
+            // First, fetch all messages
             db.collection(K.FStore.messageCollection)
                 .document("All User Messages")
-                .collection("sender_receiver:\([senderID, recieverID].sorted())")
+                .collection("sender_receiver:\([currentUserID, chatID].sorted())")
                 .getDocuments { querySnapshot, error in
-                    if let e = error {
-                        print("There was an issue deleteting data from Firestore: \(e)")
-                    } else {
-                        if let snapshotDocuments = querySnapshot?.documents {
-                            for doc in snapshotDocuments {
-                                let data = doc.data()
-                                let docID = doc.documentID
-                                
-                                // Update the document with the new 'deletedChatsBy' array
-                                self.db.collection(K.FStore.messageCollection)
-                                    .document("All User Messages")
-                                    .collection("sender_receiver:\([senderID, self.recieverID].sorted())")
-                                    .document(docID)
-                                    .updateData([K.FStore.deletedByIDField : self.deletedChatsBy]) { error in
-                                        if let e = error {
-                                            print("Error updating chat with deletedChatsBy: \(e.localizedDescription)")
-                                        } else {
-                                            print("Chat updated successfully with deletedChatsBy array")
-                                        }
+                if let error = error {
+                    print("Error fetching messages: \(error)")
+                    return
+                } else {
+                    if let documents = querySnapshot?.documents {
+                        for doc in documents {
+                            let docRef = doc.reference
+                            
+                            // Getting the existing deletedBy array or create new one
+                            var deletedBy = doc.data()[K.FStore.deletedByIDField] as? [String] ?? []
+                            
+                            // Add the current user if not avaailable in the deletedBy array
+                            if !deletedBy.contains(currentUserID) {
+                                deletedBy.append(currentUserID)
+                                docRef.updateData([
+                                    K.FStore.deletedByIDField: deletedBy
+                                ]) { error in
+                                    if let error = error {
+                                        print("Error updating deletedBy array: \(error)")
+                                    } else {
+                                        print("Successfully updated deletedBy array for message")
                                     }
+                                }
                             }
                         }
                     }
                 }
+            }
             
-            // delete feom the recent chats
+            // Delete from recent chats
             db.collection(K.FStore.userCollection)
-                .document(senderID)
+                .document(currentUserID)
                 .collection(K.FStore.recentChats)
                 .document(chatID)
                 .delete { error in
-                    if let e = error {
-                        print(e.localizedDescription)
+                    if let error = error {
+                        print("Error deleting recent chat: \(error)")
                     } else {
-                        print("successfully deleted")
+                        print("Successfully deleted from recent chats")
                     }
                 }
         }
@@ -271,6 +271,11 @@ extension HomeScreenViewController: UITableViewDelegate {
     // Handle cell selection and perform segue
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         print("Row \(indexPath.row) selected")
+        
+        guard indexPath.row < homeChats.count else {
+            print("Index out of bounds for swipe action.")
+            return
+        }
         
         let homeChat = homeChats[indexPath.row]
         
