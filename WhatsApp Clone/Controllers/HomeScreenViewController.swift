@@ -183,9 +183,9 @@ extension HomeScreenViewController: UITableViewDelegate {
         
         let homeChat = homeChats[indexPath.row]
         
-        let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { _, _, completionHandler in
+        if homeChat.type == ChatsType.simpleChat {
             
-            if homeChat.type == ChatsType.simpleChat {
+            let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { _, _, completionHandler in
                 
                 let alert = UIAlertController(title: "Delete", message: "Are you sure you want to delete?", preferredStyle: .alert)
                 
@@ -202,31 +202,12 @@ extension HomeScreenViewController: UITableViewDelegate {
                 alert.addAction(cancelButton)
                 
                 self.present(alert, animated: true, completion: nil)
-
-            } else if homeChat.type == ChatsType.groupChat {
                 
-                let alert = UIAlertController(title: "Delete", message: "Are you sure you want to delete?", preferredStyle: .alert)
-                
-                let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { (action) in
-                    print("DeleteButton pressed")
-                    self.deleteGroup(groupID: homeChat.id)
-                }
-                
-                let cancelButton = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
-                    print("Cancel Button pressed")
-                }
-                
-                alert.addAction(deleteButton)
-                alert.addAction(cancelButton)
-                
-                self.present(alert, animated: true, completion: nil)
+                completionHandler(true)
             }
-            
-            self.homeChats.remove(at: indexPath.row)
-            self.homeTableView.deleteRows(at: [indexPath], with: .automatic)
+            return UISwipeActionsConfiguration(actions: [deleteAction])
         }
-        
-        return UISwipeActionsConfiguration(actions: [deleteAction])
+        return nil
     }
     
     // Here deleting the simple chat
@@ -281,19 +262,6 @@ extension HomeScreenViewController: UITableViewDelegate {
                     }
                 }
         }
-    
-    // Here deleteing the group chat
-    func deleteGroup(groupID: String) {
-        db.collection(K.FStore.groupCollection)
-            .document(groupID)
-            .delete { error in
-                if let e = error {
-                    print("Error deleting group: \(e.localizedDescription)")
-                } else {
-                    print("Group deleted successfully")
-                }
-            }
-    }
     
     // Handle cell selection and perform segue
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
