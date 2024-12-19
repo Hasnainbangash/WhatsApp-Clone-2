@@ -181,6 +181,11 @@ extension HomeScreenViewController: UITableViewDelegate {
     // Handle the swipe action to delete a chat or group
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         
+        guard indexPath.row < homeChats.count else {
+            print("Index out of bounds for swipe action.")
+            return nil
+        }
+        
         let homeChat = homeChats[indexPath.row]
         
         if homeChat.type == ChatsType.simpleChat {
