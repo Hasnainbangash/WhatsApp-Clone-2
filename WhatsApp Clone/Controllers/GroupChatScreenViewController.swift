@@ -67,8 +67,6 @@ class GroupChatScreenViewController: UIViewController {
     }
     
     func fetchMessagesFromFirestore() {
-        // Modified Code
-        
         db.collection(K.FStore.groupCollection)
             .document(groupID)
             .collection(K.FStore.messageCollection)
@@ -82,19 +80,27 @@ class GroupChatScreenViewController: UIViewController {
                         for doc in snapshotDocuments {
                             let data = doc.data()
                             
-                            if let messageBody = data[K.FStore.messageField] as? String, let messageId = data[K.FStore.senderID] as? String {
-                                let newMessage = GroupMessageChat(message: messageBody, senderID: messageId)
-                                self.groupMessageChats.append(newMessage)
+                            // Check if message is deleted by current user
+                            let deletedByArray = data[K.FStore.deletedByIDField] as? [String] ?? []
+                            let currentUserID = Auth.auth().currentUser?.uid ?? ""
+                            
+                            // Only show message if not deleted by current user
+                            if !deletedByArray.contains(currentUserID) {
+                                if let messageBody = data[K.FStore.messageField] as? String,
+                                   let messageId = data[K.FStore.senderID] as? String {
+                                    let newMessage = GroupMessageChat(message: messageBody, senderID: messageId)
+                                    self.groupMessageChats.append(newMessage)
+                                }
                             }
                         }
-                    }
-                    
-                    DispatchQueue.main.async {
-                        self.groupChatTableView.reloadData()
                         
-                        if self.groupMessageChats.count > 0 {
-                            let indexPath = IndexPath(row: self.groupMessageChats.count - 1, section: 0)
-                            self.groupChatTableView.scrollToRow(at: indexPath, at: .top, animated: true)
+                        DispatchQueue.main.async {
+                            self.groupChatTableView.reloadData()
+                            
+                            if self.groupMessageChats.count > 0 {
+                                let indexPath = IndexPath(row: self.groupMessageChats.count - 1, section: 0)
+                                self.groupChatTableView.scrollToRow(at: indexPath, at: .top, animated: true)
+                            }
                         }
                     }
                 }
@@ -112,26 +118,45 @@ class GroupChatScreenViewController: UIViewController {
     
     
     @IBAction func deletePressed(_ sender: Any) {
-        
         let alert = UIAlertController(title: "Delete", message: "Are you sure you want to delete?", preferredStyle: .alert)
         
-        let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { (action) in
-            print("Delete Button is pressed")
+        let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { _ in
+            guard let currentUserID = Auth.auth().currentUser?.uid, let selectedRows = self.groupChatTableView.indexPathsForSelectedRows else { return }
+            
+            // For each selected message
+            for indexPath in selectedRows {
+                let message = self.groupMessageChats[indexPath.row]
+                
+                // Find and update the message in Firestore
+                self.db.collection(K.FStore.groupCollection)
+                    .document(self.groupID)
+                    .collection(K.FStore.messageCollection)
+                    .whereField(K.FStore.messageField, isEqualTo: message.message)
+                    .whereField(K.FStore.senderID, isEqualTo: message.senderID)
+                    .getDocuments { (snapshot, error) in
+                        if let document = snapshot?.documents.first {
+                            // Add current user's ID to deletedByIDField
+                            document.reference.updateData([
+                                K.FStore.deletedByIDField: [currentUserID]
+                            ])
+                        }
+                }
+            }
+            
+            // Reset UI
+            self.deleteBarButton.isHidden = true
+            self.loadMessages()
         }
         
-        let cancelButton = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
-            print("Cancel Button is pressed")
-        }
+        let cancelButton = UIAlertAction(title: "Cancel", style: .cancel)
         
         alert.addAction(deleteButton)
         alert.addAction(cancelButton)
         
-        self.present(alert, animated: true, completion: nil)
-        
+        self.present(alert, animated: true)
     }
     
     @IBAction func sendPressed(_ sender: UIButton) {
-        
         if let messageBody = messageTextfield.text, let senderID = Auth.auth().currentUser?.uid {
             
             db.collection(K.FStore.groupCollection)
@@ -140,6 +165,7 @@ class GroupChatScreenViewController: UIViewController {
                 .addDocument(data: [
                     K.FStore.senderID: senderID,
                     K.FStore.messageField: messageBody,
+                    K.FStore.deletedByIDField: [], // Initialize empty array for deleted IDs
                     K.FStore.dateField: Date().timeIntervalSince1970
                 ]) { error in
                     if let e = error {
