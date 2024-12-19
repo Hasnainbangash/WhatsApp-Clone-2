@@ -25,6 +25,7 @@ class ChatScreenViewController: UIViewController {
     var recieverID = ""
     
     var messageChats: [MessageChat] = []
+    var deletedByID: [String] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -83,7 +84,6 @@ class ChatScreenViewController: UIViewController {
     }
     
     func fetchMessagesFromFirestore() {
-        // Modified Code
         let senderID = Auth.auth().currentUser?.uid ?? "Nil"
         
         db.collection(K.FStore.messageCollection)
@@ -99,27 +99,26 @@ class ChatScreenViewController: UIViewController {
                         for doc in snapshotDocuments {
                             let data = doc.data()
                             
-                            if let messageBody = data[K.FStore.messageField] as? String {
-                                let newMessage = MessageChat(senderID: data[K.FStore.senderID] as! String, recieverID: data[K.FStore.recieverID] as! String, message: messageBody)
-                                
-                                // Appending data to the database
-                                if (data[K.FStore.senderID] as? String == senderID && data[K.FStore.recieverID] as? String == self.recieverID) || (data[K.FStore.recieverID] as? String == senderID && data[K.FStore.senderID] as? String == self.recieverID) {
-                                    
+                            // Check if message is deleted by current user
+                            let deletedByArray = data["deletedByIDField"] as? [String] ?? []
+                            
+                            // Only show message if not deleted by current user
+                            if !deletedByArray.contains(senderID) {
+                                if let messageBody = data[K.FStore.messageField] as? String {
+                                    let newMessage = MessageChat(senderID: data[K.FStore.senderID] as! String,
+                                                              recieverID: data[K.FStore.recieverID] as! String,
+                                                              message: messageBody)
                                     self.messageChats.append(newMessage)
-                                    
-                                    // Saving the messages to the core data
-                                    self.saveMessageToCoreData(senderID: senderID, receiverID: self.recieverID, message: messageBody)
                                 }
                             }
                         }
-                    }
-                    
-                    DispatchQueue.main.async {
-                        self.chatTableView.reloadData()
                         
-                        if self.messageChats.count > 0 {
-                            let indexPath = IndexPath(row: self.messageChats.count - 1, section: 0)
-                            self.chatTableView.scrollToRow(at: indexPath, at: .top, animated: true)
+                        DispatchQueue.main.async {
+                            self.chatTableView.reloadData()
+                            if self.messageChats.count > 0 {
+                                let indexPath = IndexPath(row: self.messageChats.count - 1, section: 0)
+                                self.chatTableView.scrollToRow(at: indexPath, at: .top, animated: true)
+                            }
                         }
                     }
                 }
@@ -140,21 +139,47 @@ class ChatScreenViewController: UIViewController {
     
     
     @IBAction func deletePressed(_ sender: Any) {
-        
         let alert = UIAlertController(title: "Delete", message: "Are you sure you want to delete?", preferredStyle: .alert)
         
-        let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { (action) in
-            print("Delete button is pressed")
+        let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { [weak self] (_) in
+            guard let self = self,
+                  let currentUserID = Auth.auth().currentUser?.uid,
+                  let selectedRows = self.chatTableView.indexPathsForSelectedRows else { return }
+            
+//            let messagesRef = self.db.collection(K.FStore.messageCollection)
+//                .document("All User Messages")
+//                .collection("sender_receiver:\([currentUserID, self.recieverID].sorted())")
+            
+            // For each selected message
+            for indexPath in selectedRows {
+                let message = self.messageChats[indexPath.row]
+                
+                // Find and update the message in Firestore
+                db.collection(K.FStore.messageCollection)
+                    .document("All User Messages")
+                    .collection("sender_receiver:\([currentUserID, self.recieverID].sorted())")
+                    .whereField(K.FStore.messageField, isEqualTo: message.message)
+                    .getDocuments { (snapshot, error) in
+                        if let document = snapshot?.documents.first {
+                            // Add current user's ID to deletedByIDField
+                            document.reference.updateData([
+                                "deletedByIDField": [currentUserID]
+                            ])
+                        }
+                }
+            }
+            
+            // Reset UI
+            self.deleteBarButton.isHidden = true
+            self.loadMessages()
         }
         
-        let cancelButton = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
-            print("Cancel button is pressed")
-        }
+        let cancelButton = UIAlertAction(title: "Cancel", style: .cancel)
         
         alert.addAction(deleteButton)
         alert.addAction(cancelButton)
         
-        self.present(alert, animated: true, completion: nil)
+        self.present(alert, animated: true)
     }
     
     @IBAction func sendPressed(_ sender: UIButton) {
@@ -169,6 +194,7 @@ class ChatScreenViewController: UIViewController {
                     K.FStore.senderID: senderID,
                     K.FStore.recieverID: recieverID,
                     K.FStore.messageField: messageBody,
+                    K.FStore.deletedByIDFieldArray: [],
                     K.FStore.dateField: Date().timeIntervalSince1970
                 ]) { error in
                     if let e = error {

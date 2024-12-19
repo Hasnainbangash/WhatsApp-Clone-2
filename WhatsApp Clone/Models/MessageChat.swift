@@ -11,5 +11,5 @@ struct MessageChat {
     let senderID: String
     let recieverID: String
     let message: String
-    let messageID: String
+//    let messageID: String
 }

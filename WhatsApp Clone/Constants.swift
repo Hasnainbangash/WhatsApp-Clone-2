@@ -55,6 +55,7 @@ struct K {
         static let dateField = "date"
         static let messageIDField = "messageID"
         static let groupNameField = "GroupName"
+        static let deletedByIDFieldArray = "DeletedByIDFieldArray"
     }
 }
 
