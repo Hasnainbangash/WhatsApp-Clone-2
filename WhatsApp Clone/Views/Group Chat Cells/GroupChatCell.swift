@@ -18,6 +18,9 @@ class GroupChatCell: UITableViewCell {
     override func awakeFromNib() {
         super.awakeFromNib()
         // Initialization code
+        
+        rightCheckBoxImageView.isHidden = true
+        
         messageBubble.layer.cornerRadius = messageBubble.frame.size.height / 5
         
         // Rounding the image
