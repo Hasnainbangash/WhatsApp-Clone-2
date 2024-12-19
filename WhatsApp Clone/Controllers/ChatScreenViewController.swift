@@ -148,7 +148,7 @@ class ChatScreenViewController: UIViewController {
             for indexPath in selectedRows {
                 let message = self.messageChats[indexPath.row]
                 
-                // Find and update the message in Firestore
+                // Finding and updating the message in the Firestore as settinf the field
                 self.db.collection(K.FStore.messageCollection)
                     .document("All User Messages")
                     .collection("sender_receiver:\([currentUserID, self.recieverID].sorted())")
