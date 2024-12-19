@@ -161,6 +161,16 @@ class ChatScreenViewController: UIViewController {
                             ])
                         }
                 }
+                
+                if let cell = self.chatTableView.cellForRow(at: indexPath) as? ChatCell {
+                    cell.rightCheckBoxImageView.isHidden = true
+                }
+                
+            }
+            
+            // Deselect all selected rows
+            selectedRows.forEach { indexPath in
+                self.chatTableView.deselectRow(at: indexPath, animated: true)
             }
             
             // Reset UI

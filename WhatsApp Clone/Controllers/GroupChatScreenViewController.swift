@@ -129,7 +129,7 @@ class GroupChatScreenViewController: UIViewController {
             for indexPath in selectedRows {
                 let message = self.groupMessageChats[indexPath.row]
                 
-                // Find and update the message in Firestore
+                // Finding and updating the messages in Firestore for the deleted by id field
                 self.db.collection(K.FStore.groupCollection)
                     .document(self.groupID)
                     .collection(K.FStore.messageCollection)
