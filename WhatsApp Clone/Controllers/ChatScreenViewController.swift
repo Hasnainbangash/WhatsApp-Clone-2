@@ -291,7 +291,7 @@ extension ChatScreenViewController: UITableViewDelegate {
             deleteBarButton.isHidden = false
             print("I got selected")
         } else {
-            print("I wont get selected")
+            print("I won't get selected")
         }
         
     }
