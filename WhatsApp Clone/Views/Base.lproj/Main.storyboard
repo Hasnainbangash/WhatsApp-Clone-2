@@ -507,8 +507,15 @@
                             <constraint firstItem="LeO-nT-z85" firstAttribute="top" secondItem="jFm-2W-PpA" secondAttribute="bottom" id="iX1-xP-qNr"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" id="7MY-Ac-IiA"/>
+                    <navigationItem key="navigationItem" id="7MY-Ac-IiA">
+                        <barButtonItem key="rightBarButtonItem" title="Delete" id="7E8-Bc-ELs">
+                            <connections>
+                                <action selector="deletePressed:" destination="Jf2-Xc-1lB" id="1Ka-Hz-5JM"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
                     <connections>
+                        <outlet property="deleteBarButton" destination="7E8-Bc-ELs" id="xRV-a8-rzi"/>
                         <outlet property="groupChatTableView" destination="jFm-2W-PpA" id="x0k-EL-6Nl"/>
                         <outlet property="messageTextfield" destination="BIt-E1-Nvy" id="5AD-4c-VZL"/>
                     </connections>

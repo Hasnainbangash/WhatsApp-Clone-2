@@ -14,6 +14,7 @@ class GroupChatScreenViewController: UIViewController {
     
     @IBOutlet weak var groupChatTableView: UITableView!
     @IBOutlet weak var messageTextfield: UITextField!
+    @IBOutlet weak var deleteBarButton: UIBarButtonItem!
     
     let db = Firestore.firestore()
     
@@ -30,6 +31,8 @@ class GroupChatScreenViewController: UIViewController {
         
         // Do any additional setup after loading the view.
         groupChatTableView.dataSource = self
+        
+        deleteBarButton.isHidden = true
         
         title = titleName
         
@@ -104,6 +107,11 @@ class GroupChatScreenViewController: UIViewController {
             // Fetching the data from the core data
             fetchMessagesFromCoreData()
         }
+    }
+    
+    
+    @IBAction func deletePressed(_ sender: Any) {
+        
     }
     
     @IBAction func sendPressed(_ sender: UIButton) {
