@@ -187,10 +187,40 @@ extension HomeScreenViewController: UITableViewDelegate {
         let deleteAction = UIContextualAction(style: .destructive, title: "Delete") { _, _, completionHandler in
             
             if homeChat.type == ChatsType.simpleChat {
-                self.deleteChat(chatID: homeChat.id)
                 
+                let alert = UIAlertController(title: "Delete", message: "Are you sure you want to delete?", preferredStyle: .alert)
+                
+                let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { (action) in
+                    print("DeleteButton pressed")
+                    self.deleteChat(chatID: homeChat.id)
+                }
+                
+                let cancelButton = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
+                    print("Cancel Button pressed")
+                }
+                
+                alert.addAction(deleteButton)
+                alert.addAction(cancelButton)
+                
+                self.present(alert, animated: true, completion: nil)
+
             } else if homeChat.type == ChatsType.groupChat {
-                self.deleteGroup(groupID: homeChat.id)
+                
+                let alert = UIAlertController(title: "Delete", message: "Are you sure you want to delete?", preferredStyle: .alert)
+                
+                let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { (action) in
+                    print("DeleteButton pressed")
+                    self.deleteGroup(groupID: homeChat.id)
+                }
+                
+                let cancelButton = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
+                    print("Cancel Button pressed")
+                }
+                
+                alert.addAction(deleteButton)
+                alert.addAction(cancelButton)
+                
+                self.present(alert, animated: true, completion: nil)
             }
             
             self.homeChats.remove(at: indexPath.row)
