@@ -217,14 +217,14 @@ extension HomeScreenViewController: UITableViewDelegate {
         return nil
     }
     
-        func deleteChat(chatID: String) {
-            let currentUserID = Auth.auth().currentUser?.uid ?? "Nil"
-            
-            // First, fetch all messages
-            db.collection(K.FStore.messageCollection)
-                .document("All User Messages")
-                .collection("sender_receiver:\([currentUserID, chatID].sorted())")
-                .getDocuments { querySnapshot, error in
+    func deleteChat(chatID: String) {
+        let currentUserID = Auth.auth().currentUser?.uid ?? "Nil"
+        
+        // First, fetch all messages
+        db.collection(K.FStore.messageCollection)
+            .document("All User Messages")
+            .collection("sender_receiver:\([currentUserID, chatID].sorted())")
+            .getDocuments { querySnapshot, error in
                 if let error = error {
                     print("Error fetching messages: \(error)")
                     return
@@ -253,20 +253,20 @@ extension HomeScreenViewController: UITableViewDelegate {
                     }
                 }
             }
-            
-            // Delete from recent chats
-            db.collection(K.FStore.userCollection)
-                .document(currentUserID)
-                .collection(K.FStore.recentChats)
-                .document(chatID)
-                .delete { error in
-                    if let error = error {
-                        print("Error deleting recent chat: \(error)")
-                    } else {
-                        print("Successfully deleted from recent chats")
-                    }
+        
+        // Delete from recent chats
+        db.collection(K.FStore.userCollection)
+            .document(currentUserID)
+            .collection(K.FStore.recentChats)
+            .document(chatID)
+            .delete { error in
+                if let error = error {
+                    print("Error deleting recent chat: \(error)")
+                } else {
+                    print("Successfully deleted from recent chats")
                 }
-        }
+            }
+    }
     
     // Handle cell selection and perform segue
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
