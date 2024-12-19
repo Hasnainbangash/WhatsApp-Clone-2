@@ -229,8 +229,8 @@ extension HomeScreenViewController: UITableViewDelegate {
                     print("Error fetching messages: \(error)")
                     return
                 } else {
-                    if let documents = querySnapshot?.documents {
-                        for doc in documents {
+                    if let snapshotDocuments = querySnapshot?.documents {
+                        for doc in snapshotDocuments {
                             let docRef = doc.reference
                             
                             // Getting the existing deletedBy array or create new one
