@@ -13,7 +13,7 @@ class GroupChatCell: UITableViewCell {
     @IBOutlet weak var labelName: UILabel!
     @IBOutlet weak var leftImageView: UIImageView!
     @IBOutlet weak var rightImageView: UIImageView!
-    
+    @IBOutlet weak var rightCheckBoxImageView: UIImageView!
     
     override func awakeFromNib() {
         super.awakeFromNib()
