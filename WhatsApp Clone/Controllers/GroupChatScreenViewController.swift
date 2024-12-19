@@ -113,6 +113,21 @@ class GroupChatScreenViewController: UIViewController {
     
     @IBAction func deletePressed(_ sender: Any) {
         
+        let alert = UIAlertController(title: "Delete", message: "Are you sure you want to delete?", preferredStyle: .alert)
+        
+        let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { (action) in
+            print("Delete Button is pressed")
+        }
+        
+        let cancelButton = UIAlertAction(title: "Cancel", style: .cancel) { (action) in
+            print("Cancel Button is pressed")
+        }
+        
+        alert.addAction(deleteButton)
+        alert.addAction(cancelButton)
+        
+        self.present(alert, animated: true, completion: nil)
+        
     }
     
     @IBAction func sendPressed(_ sender: UIButton) {
