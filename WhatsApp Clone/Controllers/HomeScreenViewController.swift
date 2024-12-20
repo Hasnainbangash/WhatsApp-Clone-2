@@ -8,6 +8,7 @@
 import UIKit
 import FirebaseAuth
 import FirebaseFirestore
+import CoreData
 
 class HomeScreenViewController: UIViewController {
     
@@ -238,7 +239,23 @@ extension HomeScreenViewController: UITableViewDelegate {
     func deleteChat(chatID: String) {
         let currentUserID = Auth.auth().currentUser?.uid ?? "Nil"
         
-        // First, fetch all messages
+        // First, mark messages as deleted in Core Data
+        let request = Messages.fetchRequest() as NSFetchRequest<Messages>
+        let pred = NSPredicate(format: "((senderID == %@ AND receiverID == %@) OR (senderID == %@ AND receiverID == %@))",
+                               currentUserID, chatID, chatID, currentUserID)
+        
+        do {
+            let messages = try PersistentStorage.shared.context.fetch(request)
+            for message in messages {
+                message.isDelete = true
+            }
+            try PersistentStorage.shared.context.save()
+            print("Successfully marked messages as deleted in Core Data")
+        } catch {
+            print("Error marking messages as deleted in Core Data: \(error)")
+        }
+        
+        // Then, update Firestore messages
         db.collection(K.FStore.messageCollection)
             .document("All User Messages")
             .collection("sender_receiver:\([currentUserID, chatID].sorted())")
@@ -246,33 +263,33 @@ extension HomeScreenViewController: UITableViewDelegate {
                 if let error = error {
                     print("Error fetching messages: \(error)")
                     return
-                } else {
-                    if let snapshotDocuments = querySnapshot?.documents {
-                        for doc in snapshotDocuments {
-                            let docRef = doc.reference
-                            
-                            // Getting the existing deletedBy array or create new one
-                            var deletedBy = doc.data()[K.FStore.deletedByIDField] as? [String] ?? []
-                            
-                            // Add the current user if not avaailable in the deletedBy array
-                            if !deletedBy.contains(currentUserID) {
-                                deletedBy.append(currentUserID)
-                                docRef.updateData([
-                                    K.FStore.deletedByIDField: deletedBy
-                                ]) { error in
-                                    if let error = error {
-                                        print("Error updating deletedBy array: \(error)")
-                                    } else {
-                                        print("Successfully updated deletedBy array for message")
-                                    }
+                }
+                
+                if let snapshotDocuments = querySnapshot?.documents {
+                    for doc in snapshotDocuments {
+                        let docRef = doc.reference
+                        
+                        // Get existing deletedBy array or create new one
+                        var deletedBy = doc.data()[K.FStore.deletedByIDField] as? [String] ?? []
+                        
+                        // Add current user if not already in the deletedBy array
+                        if !deletedBy.contains(currentUserID) {
+                            deletedBy.append(currentUserID)
+                            docRef.updateData([
+                                K.FStore.deletedByIDField: deletedBy
+                            ]) { error in
+                                if let error = error {
+                                    print("Error updating deletedBy array: \(error)")
+                                } else {
+                                    print("Successfully updated deletedBy array for message")
                                 }
                             }
                         }
                     }
                 }
-            }
+        }
         
-        // Delete from recent chats
+        // Delete from current user's recent chats only
         db.collection(K.FStore.userCollection)
             .document(currentUserID)
             .collection(K.FStore.recentChats)
