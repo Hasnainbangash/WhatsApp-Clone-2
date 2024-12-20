@@ -50,18 +50,22 @@ class ChatScreenViewController: UIViewController {
     func fetchMessagesFromCoreData(senderID: String, receiverID: String) {
         do {
             let request = Messages.fetchRequest() as NSFetchRequest<Messages>
-            let pred = NSPredicate(format: "(senderID == %@ AND receiverID == %@) OR (senderID == %@ AND receiverID == %@)", senderID, receiverID, receiverID, senderID)
+            let pred = NSPredicate(format: "(senderID == %@ AND receiverID == %@) OR (senderID == %@ AND receiverID == %@)",
+                                   senderID, receiverID, receiverID, senderID)
             let sort = NSSortDescriptor(key: "date", ascending: true)
             
             request.predicate = pred
             request.sortDescriptors = [sort]
             
             let messages = try PersistentStorage.shared.context.fetch(request)
-            messageChats = messages.map { MessageChat(senderID: $0.senderID!, recieverID: $0.receiverID!, message: $0.message!) }
+            messageChats = messages.map {
+                MessageChat(senderID: $0.senderID!,
+                            recieverID: $0.receiverID!,
+                            message: $0.message!)
+            }
             
             DispatchQueue.main.async {
                 self.chatTableView.reloadData()
-                
                 if self.messageChats.count > 0 {
                     let indexPath = IndexPath(row: self.messageChats.count - 1, section: 0)
                     self.chatTableView.scrollToRow(at: indexPath, at: .top, animated: true)
@@ -73,14 +77,27 @@ class ChatScreenViewController: UIViewController {
     }
     
     // Saving the messages to Core Data
-    func saveMessageToCoreData(senderID: String, receiverID: String, message: String) {
-        let newMessage = Messages(context: self.context)
-        newMessage.senderID = senderID
-        newMessage.receiverID = receiverID
-        newMessage.message = message
-        newMessage.date = Date().timeIntervalSince1970
-        PersistentStorage.shared.saveContext()
-        print("Messages saved succesfully to the core data")
+    func saveMessageToCoreData(senderID: String, receiverID: String, message: String, date: TimeInterval) {
+        // Check if message already exists
+        let fetchRequest = Messages.fetchRequest() as NSFetchRequest<Messages>
+        fetchRequest.predicate = NSPredicate(format: "message == %@", message)
+        
+        do {
+            let existingMessages = try context.fetch(fetchRequest)
+            if existingMessages.isEmpty {
+                // Only save if message doesn't exist
+                let newMessage = Messages(context: self.context)
+                newMessage.senderID = senderID
+                newMessage.receiverID = receiverID
+                newMessage.message = message
+                newMessage.date = date
+                
+                try PersistentStorage.shared.context.save()
+                print("Message saved successfully to Core Data")
+            }
+        } catch {
+            print("Error saving message to Core Data: \(error)")
+        }
     }
     
     func fetchMessagesFromFirestore() {
@@ -93,47 +110,108 @@ class ChatScreenViewController: UIViewController {
             .addSnapshotListener { querySnapshot, error in
                 if let e = error {
                     print("There was an issue retrieving data from Firestore: \(e)")
-                } else {
-                    self.messageChats.removeAll()
-                    if let snapshotDocuments = querySnapshot?.documents {
-                        for doc in snapshotDocuments {
-                            let data = doc.data()
-                            
-                            // Checking if the message is deleted by the current user
-                            let deletedByArray = data[K.FStore.deletedByIDField] as? [String] ?? []
-                            
-                            // Only show that message if not deleted by current user
-                            if !deletedByArray.contains(senderID) {
-                                if let messageBody = data[K.FStore.messageField] as? String {
-                                    let newMessage = MessageChat(senderID: data[K.FStore.senderID] as! String, recieverID: data[K.FStore.recieverID] as! String, message: messageBody)
-                                    self.messageChats.append(newMessage)
+                    return
+                }
+                
+                if let snapshotDocuments = querySnapshot?.documents {
+                    // Create a set to track existing messages
+                    var existingMessages = Set<String>()
+                    
+                    // Get existing messages from Core Data
+                    do {
+                        let request = Messages.fetchRequest() as NSFetchRequest<Messages>
+                        let messages = try self.context.fetch(request)
+                        existingMessages = Set(messages.compactMap { $0.message })
+                    } catch {
+                        print("Error fetching existing messages: \(error)")
+                    }
+                    
+                    for doc in snapshotDocuments {
+                        let data = doc.data()
+                        let deletedByArray = data[K.FStore.deletedByIDField] as? [String] ?? []
+                        
+                        // Only process message if not deleted by current user
+                        if !deletedByArray.contains(senderID) {
+                            if let messageBody = data[K.FStore.messageField] as? String,
+                               let messageSenderID = data[K.FStore.senderID] as? String,
+                               let messageReceiverID = data[K.FStore.recieverID] as? String {
+                                
+                                // Only save if message doesn't exist in Core Data
+                                if !existingMessages.contains(messageBody) {
+                                    self.saveMessageToCoreData(
+                                        senderID: messageSenderID,
+                                        receiverID: messageReceiverID,
+                                        message: messageBody,
+                                        date: data[K.FStore.dateField] as? TimeInterval ?? Date().timeIntervalSince1970
+                                    )
                                 }
                             }
                         }
-                        
-                        DispatchQueue.main.async {
-                            self.chatTableView.reloadData()
-                            if self.messageChats.count > 0 {
-                                let indexPath = IndexPath(row: self.messageChats.count - 1, section: 0)
-                                self.chatTableView.scrollToRow(at: indexPath, at: .top, animated: true)
-                            }
+                    }
+                    
+                    // After saving new messages to Core Data, fetch and display all messages
+                    self.fetchMessagesFromCoreData(senderID: senderID, receiverID: self.recieverID)
+                }
+            }
+    }
+    
+    func loadMessages() {
+        let senderID = Auth.auth().currentUser?.uid ?? "Nil"
+        
+        // First check if we have messages in Core Data
+        fetchMessagesFromCoreData(senderID: senderID, receiverID: self.recieverID)
+        
+        // If no messages in Core Data, then fetch from Firestore
+        if messageChats.isEmpty {
+            fetchMessagesFromFirestore()
+        }
+    }
+    
+    private func deleteMessageFromFirestore(message: MessageChat, currentUserID: String) {
+        db.collection(K.FStore.messageCollection)
+            .document("All User Messages")
+            .collection("sender_receiver:\([currentUserID, recieverID].sorted())")
+            .whereField(K.FStore.messageField, isEqualTo: message.message)
+            .getDocuments { (querySnapshot, error) in
+                if let error = error {
+                    print("Error getting document for deletion: \(error)")
+                    return
+                }
+                
+                if let document = querySnapshot?.documents.first {
+                    // Get current deletedBy array
+                    var deletedByArray = document.data()[K.FStore.deletedByIDField] as? [String] ?? []
+                    
+                    // Add current user if not already in array
+                    if !deletedByArray.contains(currentUserID) {
+                        deletedByArray.append(currentUserID)
+                    }
+                    
+                    // Update document with new deletedBy array
+                    document.reference.updateData([
+                        K.FStore.deletedByIDField: deletedByArray
+                    ]) { error in
+                        if let error = error {
+                            print("Error updating deletedBy field: \(error)")
                         }
                     }
                 }
             }
     }
     
-    func loadMessages() {
+    private func deleteMessageFromCoreData(message: MessageChat) {
+        let fetchRequest: NSFetchRequest<Messages> = Messages.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "message == %@", message.message)
         
-        let senderID = Auth.auth().currentUser?.uid ?? "Nil"
-        
-        fetchMessagesFromFirestore()
-        
-        // Here checking if there is no internet connection and the model array is empty than fetch messages from the core data
-        if messageChats.isEmpty {
-            // Fetching the data from the core data
-            // As the error is occured now fetching the data from the coreDatabase
-            fetchMessagesFromCoreData(senderID: senderID, receiverID: self.recieverID)
+        do {
+            let messages = try context.fetch(fetchRequest)
+            for message in messages {
+                context.delete(message)
+            }
+            try PersistentStorage.shared.context.save()
+            print("Successfully deleted message from Core Data")
+        } catch {
+            print("Error deleting message from Core Data: \(error)")
         }
     }
     
@@ -147,34 +225,30 @@ class ChatScreenViewController: UIViewController {
             for indexPath in selectedRows {
                 let message = self.messageChats[indexPath.row]
                 
-                // Finding and updating the message in the Firestore as settinf the field
-                self.db.collection(K.FStore.messageCollection)
-                    .document("All User Messages")
-                    .collection("sender_receiver:\([currentUserID, self.recieverID].sorted())")
-                    .whereField(K.FStore.messageField, isEqualTo: message.message)
-                    .getDocuments { (querySnapshot, error) in
-                        if let snapshotDocuments = querySnapshot?.documents.first {
-                            // Adding the current user ID to deleted by ID Field
-                            snapshotDocuments.reference.updateData([
-                                K.FStore.deletedByIDField: [currentUserID]
-                            ])
-                        }
-                }
+                // 1. Delete from Firestore
+                self.deleteMessageFromFirestore(message: message, currentUserID: currentUserID)
                 
+                // 2. Delete from Core Data
+                self.deleteMessageFromCoreData(message: message)
+                
+                // 3. Update UI
                 if let cell = self.chatTableView.cellForRow(at: indexPath) as? ChatCell {
                     cell.rightCheckBoxImageView.isHidden = true
                 }
-                
             }
             
-            // Deselecting all the selected rows
+            // Deselect all rows
             selectedRows.forEach { indexPath in
                 self.chatTableView.deselectRow(at: indexPath, animated: true)
             }
             
-            // REsetting the UI afterdelete pressed
+            // Reset UI
             self.deleteBarButton.isHidden = true
-            self.loadMessages()
+            
+            // Refresh messages from Core Data
+            if let currentUserID = Auth.auth().currentUser?.uid {
+                self.fetchMessagesFromCoreData(senderID: currentUserID, receiverID: self.recieverID)
+            }
         }
         
         let cancelButton = UIAlertAction(title: "Cancel", style: .cancel)
@@ -269,43 +343,43 @@ extension ChatScreenViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
+        // Check if the index is within bounds of the messageChats array
+        if indexPath.row < messageChats.count {
+            let messageChat = messageChats[indexPath.row]
             
-            // Check if the index is within bounds of the messageChats array
-            if indexPath.row < messageChats.count {
-                let messageChat = messageChats[indexPath.row]
-                
-                // Dequeue the cell
-                let cell = tableView.dequeueReusableCell(withIdentifier: K.Identifiers.chatCellIdentifier, for: indexPath) as! ChatCell
-                
-                // Set up the cell
-                cell.labelName.text = messageChat.message
-                
-                if messageChat.senderID == Auth.auth().currentUser?.uid {
-                    // This is the sender's message
-                    cell.leftImageView.isHidden = true
-                    cell.rightImageView.isHidden = false
-                    cell.messageBubble.backgroundColor = UIColor(
-                        red: CGFloat(160) / 255.0,
-                        green: CGFloat(214) / 255.0,
-                        blue: CGFloat(131) / 255.0,
-                        alpha: 1.0
-                    )
-                } else {
-                    // This is the receiver's message
-                    cell.leftImageView.isHidden = false
-                    cell.rightImageView.isHidden = true
-                    cell.messageBubble.backgroundColor = UIColor(
-                        red: CGFloat(114) / 255.0,
-                        green: CGFloat(191) / 255.0,
-                        blue: CGFloat(120) / 255.0,
-                        alpha: 1.0
-                    )
-                }
-                return cell
+            // Dequeue the cell
+            let cell = tableView.dequeueReusableCell(withIdentifier: K.Identifiers.chatCellIdentifier, for: indexPath) as! ChatCell
+            
+            // Set up the cell
+            cell.labelName.text = messageChat.message
+            
+            if messageChat.senderID == Auth.auth().currentUser?.uid {
+                // This is the sender's message
+                cell.leftImageView.isHidden = true
+                cell.rightImageView.isHidden = false
+                cell.messageBubble.backgroundColor = UIColor(
+                    red: CGFloat(160) / 255.0,
+                    green: CGFloat(214) / 255.0,
+                    blue: CGFloat(131) / 255.0,
+                    alpha: 1.0
+                )
             } else {
-                return UITableViewCell()
+                // This is the receiver's message
+                cell.leftImageView.isHidden = false
+                cell.rightImageView.isHidden = true
+                cell.messageBubble.backgroundColor = UIColor(
+                    red: CGFloat(114) / 255.0,
+                    green: CGFloat(191) / 255.0,
+                    blue: CGFloat(120) / 255.0,
+                    alpha: 1.0
+                )
             }
+            return cell
+        } else {
+            return UITableViewCell()
         }
+    }
 }
 
 extension ChatScreenViewController: UITableViewDelegate {
@@ -329,7 +403,7 @@ extension ChatScreenViewController: UITableViewDelegate {
         print("Row \(indexPath.row) selected")
         
         if let cell = tableView.cellForRow(at: indexPath) as? ChatCell {
-//            deleteBarButton.isHidden = false
+            //            deleteBarButton.isHidden = false
             cell.rightCheckBoxImageView.image = UIImage(systemName: "circle")
             print("I got deselected")
         } else {
