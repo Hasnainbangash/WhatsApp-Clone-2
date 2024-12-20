@@ -12,6 +12,7 @@ import FirebaseFirestore
 class HomeScreenViewController: UIViewController {
     
     @IBOutlet weak var homeTableView: UITableView!
+    @IBOutlet weak var addButtonLabel: UIButton!
     
     // Reference to firestore database
     let db = Firestore.firestore()
@@ -33,6 +34,9 @@ class HomeScreenViewController: UIViewController {
         homeTableView.delegate = self
         
         navigationItem.hidesBackButton = true
+        
+        // Resizing the add button
+        addButtonLabel.layer.cornerRadius = addButtonLabel.frame.size.height / 3
         
         homeTableView.register(UINib(nibName: K.NibNames.homeCellNibName, bundle: nil), forCellReuseIdentifier: K.Identifiers.homeCellIdentifier)
         

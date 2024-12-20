@@ -236,6 +236,7 @@
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" id="gEO-KO-udg">
                                 <rect key="frame" x="337" y="755" width="49" height="53"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMinY="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" red="0.71372549019607845" green="1" blue="0.63137254901960782" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="plain" image="plus" catalog="system">
                                     <color key="baseForegroundColor" red="0.06431454784" green="0.70918616130000001" blue="0.34901960780000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -262,6 +263,7 @@
                         </barButtonItem>
                     </navigationItem>
                     <connections>
+                        <outlet property="addButtonLabel" destination="gEO-KO-udg" id="8rh-m4-Css"/>
                         <outlet property="homeTableView" destination="Fc4-7X-WmU" id="gjY-SI-XNy"/>
                         <segue destination="BzU-BR-xTh" kind="show" identifier="HomeScreenToChatScreen" id="VR0-yC-xoc"/>
                         <segue destination="Jf2-Xc-1lB" kind="show" identifier="HomeScreenToGroupChatScreen" id="dc8-c7-YJU"/>
