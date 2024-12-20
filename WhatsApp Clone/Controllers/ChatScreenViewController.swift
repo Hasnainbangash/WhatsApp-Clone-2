@@ -107,9 +107,7 @@ class ChatScreenViewController: UIViewController {
                             // Only show message if not deleted by current user
                             if !deletedByArray.contains(senderID) {
                                 if let messageBody = data[K.FStore.messageField] as? String {
-                                    let newMessage = MessageChat(senderID: data[K.FStore.senderID] as! String,
-                                                              recieverID: data[K.FStore.recieverID] as! String,
-                                                              message: messageBody)
+                                    let newMessage = MessageChat(senderID: data[K.FStore.senderID] as! String, recieverID: data[K.FStore.recieverID] as! String, message: messageBody)
                                     self.messageChats.append(newMessage)
                                 }
                             }
@@ -144,7 +142,7 @@ class ChatScreenViewController: UIViewController {
         let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { _ in
             guard let currentUserID = Auth.auth().currentUser?.uid, let selectedRows = self.chatTableView.indexPathsForSelectedRows else { return }
             
-            // For each selected message
+            // Getting each selected message
             for indexPath in selectedRows {
                 let message = self.messageChats[indexPath.row]
                 
@@ -153,10 +151,10 @@ class ChatScreenViewController: UIViewController {
                     .document("All User Messages")
                     .collection("sender_receiver:\([currentUserID, self.recieverID].sorted())")
                     .whereField(K.FStore.messageField, isEqualTo: message.message)
-                    .getDocuments { (snapshot, error) in
-                        if let document = snapshot?.documents.first {
-                            // Add current user's ID to deletedByIDField
-                            document.reference.updateData([
+                    .getDocuments { (querySnapshot, error) in
+                        if let snapshotDocuments = querySnapshot?.documents.first {
+                            // Adding the current user ID to deleted by ID Field
+                            snapshotDocuments.reference.updateData([
                                 K.FStore.deletedByIDField: [currentUserID]
                             ])
                         }
@@ -168,12 +166,12 @@ class ChatScreenViewController: UIViewController {
                 
             }
             
-            // Deselect all selected rows
+            // Deselecting all the selected rows
             selectedRows.forEach { indexPath in
                 self.chatTableView.deselectRow(at: indexPath, animated: true)
             }
             
-            // Reset UI
+            // REsetting the UI afterdelete pressed
             self.deleteBarButton.isHidden = true
             self.loadMessages()
         }
