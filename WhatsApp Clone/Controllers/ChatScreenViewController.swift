@@ -101,10 +101,10 @@ class ChatScreenViewController: UIViewController {
                         for doc in snapshotDocuments {
                             let data = doc.data()
                             
-                            // Check if message is deleted by current user
+                            // Checking if the message is deleted by the current user
                             let deletedByArray = data[K.FStore.deletedByIDField] as? [String] ?? []
                             
-                            // Only show message if not deleted by current user
+                            // Only show that message if not deleted by current user
                             if !deletedByArray.contains(senderID) {
                                 if let messageBody = data[K.FStore.messageField] as? String {
                                     let newMessage = MessageChat(senderID: data[K.FStore.senderID] as! String, recieverID: data[K.FStore.recieverID] as! String, message: messageBody)
