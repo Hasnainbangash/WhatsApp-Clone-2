@@ -93,8 +93,6 @@ class ChatScreenViewController: UIViewController {
             .addSnapshotListener { querySnapshot, error in
                 if let e = error {
                     print("There was an issue retrieving data from Firestore: \(e)")
-                    // As the error is occured now fetching the data from the coreDatabase
-                    self.fetchMessagesFromCoreData(senderID: senderID, receiverID: self.recieverID)
                 } else {
                     self.messageChats.removeAll()
                     if let snapshotDocuments = querySnapshot?.documents {
@@ -127,13 +125,16 @@ class ChatScreenViewController: UIViewController {
     
     func loadMessages() {
         
+        let senderID = Auth.auth().currentUser?.uid ?? "Nil"
+        
         fetchMessagesFromFirestore()
         
         // Here checking if there is no internet connection and the model array is empty than fetch messages from the core data
-//        if messageChats.isEmpty {
-//            // Fetching the data from the core data
-//            fetchMessagesFromCoreData(senderID: senderID, receiverID: recieverID)
-//        }
+        if messageChats.isEmpty {
+            // Fetching the data from the core data
+            // As the error is occured now fetching the data from the coreDatabase
+            fetchMessagesFromCoreData(senderID: senderID, receiverID: self.recieverID)
+        }
     }
     
     @IBAction func deletePressed(_ sender: Any) {
