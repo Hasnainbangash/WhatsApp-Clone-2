@@ -225,13 +225,13 @@ class ChatScreenViewController: UIViewController {
             for indexPath in selectedRows {
                 let message = self.messageChats[indexPath.row]
                 
-                // 1. Delete from Firestore
+                // Delete the messsage from the firestore
                 self.deleteMessageFromFirestore(message: message, currentUserID: currentUserID)
                 
-                // 2. Delete from Core Data
+                // Delete the message from thr core data
                 self.deleteMessageFromCoreData(message: message)
                 
-                // 3. Update UI
+                // Here updating the UI
                 if let cell = self.chatTableView.cellForRow(at: indexPath) as? ChatCell {
                     cell.rightCheckBoxImageView.isHidden = true
                 }
