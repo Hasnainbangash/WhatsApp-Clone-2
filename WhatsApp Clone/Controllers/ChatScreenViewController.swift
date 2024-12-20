@@ -79,13 +79,14 @@ class ChatScreenViewController: UIViewController {
     // Saving the messages to Core Data
     func saveMessageToCoreData(senderID: String, receiverID: String, message: String, date: TimeInterval) {
         // Check if message already exists
-        let fetchRequest = Messages.fetchRequest() as NSFetchRequest<Messages>
-        fetchRequest.predicate = NSPredicate(format: "message == %@", message)
+        let request = Messages.fetchRequest() as NSFetchRequest<Messages>
+        let pred = NSPredicate(format: "message == %@", message)
+        request.predicate = pred
         
         do {
-            let existingMessages = try context.fetch(fetchRequest)
+            let existingMessages = try context.fetch(request)
             if existingMessages.isEmpty {
-                // Only save if message doesn't exist
+                // Only save the messages if the messages are not present
                 let newMessage = Messages(context: self.context)
                 newMessage.senderID = senderID
                 newMessage.receiverID = receiverID
