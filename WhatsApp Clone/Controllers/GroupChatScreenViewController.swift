@@ -74,8 +74,6 @@ class GroupChatScreenViewController: UIViewController {
             .addSnapshotListener { querySnapshot, error in
                 if let e = error {
                     print("There was an issue retrieving data from Firestore: \(e)")
-                    print("AS there is a error so fetching the data from the core data now")
-                    self.fetchMessagesFromCoreData()
                 } else {
                     self.groupMessageChats.removeAll()
                     if let snapshotDocuments = querySnapshot?.documents {
@@ -112,10 +110,11 @@ class GroupChatScreenViewController: UIViewController {
     func loadMessages() {
         fetchMessagesFromFirestore()
         
-        //        if groupMessageChats.isEmpty {
-        //            // Fetching the data from the core data
-        //            fetchMessagesFromCoreData()
-        //        }
+        if groupMessageChats.isEmpty {
+            // Fetching the data from the core data
+            print("AS there is a error so fetching the data from the core data now")
+            fetchMessagesFromCoreData()
+        }
     }
     
     @IBAction func deletePressed(_ sender: Any) {
