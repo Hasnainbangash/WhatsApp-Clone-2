@@ -159,10 +159,10 @@ class ChatScreenViewController: UIViewController {
     func loadMessages() {
         let senderID = Auth.auth().currentUser?.uid ?? "Nil"
         
-        // First check if we have messages in Core Data
+        // Checking the messages are present in the core data or not
         fetchMessagesFromCoreData(senderID: senderID, receiverID: self.recieverID)
         
-        // If no messages in Core Data, then fetch from Firestore
+        // If there is no messages in the core data then fetch from the firestore
         if messageChats.isEmpty {
             fetchMessagesFromFirestore()
         }
@@ -180,7 +180,7 @@ class ChatScreenViewController: UIViewController {
                 }
                 
                 if let document = querySnapshot?.documents.first {
-                    // Get current deletedBy array
+                    // Getting the deleted by array
                     var deletedByArray = document.data()[K.FStore.deletedByIDField] as? [String] ?? []
                     
                     // Add current user if not already in array
