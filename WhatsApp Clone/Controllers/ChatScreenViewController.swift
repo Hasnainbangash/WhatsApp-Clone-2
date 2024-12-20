@@ -142,7 +142,7 @@ class ChatScreenViewController: UIViewController {
         let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { _ in
             guard let currentUserID = Auth.auth().currentUser?.uid, let selectedRows = self.chatTableView.indexPathsForSelectedRows else { return }
             
-            // Getting each selected message
+            // For each selected message
             for indexPath in selectedRows {
                 let message = self.messageChats[indexPath.row]
                 

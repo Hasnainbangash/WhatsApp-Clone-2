@@ -44,7 +44,7 @@ class GroupChatScreenViewController: UIViewController {
         loadMessages()
     }
     
-    // Fetch messages from Core Data
+    // Fetchin the messages from the Core Data
     func fetchMessagesFromCoreData() {
         do {
             let request = GroupMessages.fetchRequest() as NSFetchRequest<GroupMessages>
@@ -55,7 +55,7 @@ class GroupChatScreenViewController: UIViewController {
         }
     }
     
-    // Save the message to Core Data
+    // Savin the the message to Core Data
     func saveMessageToCoreData(message: String, senderID: String) {
         let newMessage = GroupMessages(context: self.context)
         newMessage.message = message
@@ -154,7 +154,7 @@ class GroupChatScreenViewController: UIViewController {
                 self.groupChatTableView.deselectRow(at: indexPath, animated: true)
             }
             
-            // Reset UI
+            // Resetting the UI after the delete button is pressed
             self.deleteBarButton.isHidden = true
             self.loadMessages()
         }
