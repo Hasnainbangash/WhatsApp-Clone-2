@@ -241,8 +241,9 @@ extension HomeScreenViewController: UITableViewDelegate {
         
         // First, mark messages as deleted in Core Data
         let request = Messages.fetchRequest() as NSFetchRequest<Messages>
-        let pred = NSPredicate(format: "((senderID == %@ AND receiverID == %@) OR (senderID == %@ AND receiverID == %@))",
-                               currentUserID, chatID, chatID, currentUserID)
+        let pred = NSPredicate(format: "((senderID == %@ AND receiverID == %@) OR (senderID == %@ AND receiverID == %@))", currentUserID, chatID, chatID, currentUserID)
+        
+        request.predicate = pred
         
         do {
             let messages = try PersistentStorage.shared.context.fetch(request)
