@@ -179,17 +179,17 @@ class ChatScreenViewController: UIViewController {
                     return
                 }
                 
-                if let document = querySnapshot?.documents.first {
+                if let snapshotDocuments = querySnapshot?.documents.first {
                     // Getting the deleted by array
-                    var deletedByArray = document.data()[K.FStore.deletedByIDField] as? [String] ?? []
+                    var deletedByArray = snapshotDocuments.data()[K.FStore.deletedByIDField] as? [String] ?? []
                     
                     // Add current user if not already in array
                     if !deletedByArray.contains(currentUserID) {
                         deletedByArray.append(currentUserID)
                     }
                     
-                    // Update document with new deletedBy array
-                    document.reference.updateData([
+                    // Updating the document with new deletedBy array
+                    snapshotDocuments.reference.updateData([
                         K.FStore.deletedByIDField: deletedByArray
                     ]) { error in
                         if let error = error {
