@@ -153,11 +153,25 @@ class HomeScreenViewController: UIViewController {
     @IBAction func logOutPressed(_ sender: UIBarButtonItem) {
         do {
             try Auth.auth().signOut()
-//            navigationController?.popToRootViewController(animated: true)
+            
+            // Instantiate the storyboard and the login view controller
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            if let loginVC = storyboard.instantiateViewController(withIdentifier: "WelcomeViewController") as? WelcomeViewController {
+                
+                // Create a new UINavigationController with loginVC as the root
+                let navController = UINavigationController(rootViewController: loginVC)
+                
+                // Set the new navigation controller as the root view controller of the app window
+                if let window = UIApplication.shared.keyWindow {
+                    window.rootViewController = navController
+                    window.makeKeyAndVisible()
+                }
+            }
         } catch let signOutError as NSError {
             print("Error signing out: %@", signOutError)
         }
     }
+
     
 }
 

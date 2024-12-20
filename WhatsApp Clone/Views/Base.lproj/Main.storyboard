@@ -259,7 +259,6 @@
                         <barButtonItem key="rightBarButtonItem" title="Log Out" id="o5Z-vq-i9H">
                             <connections>
                                 <action selector="logOutPressed:" destination="qLJ-GK-Fnz" id="KWT-F8-vqf"/>
-                                <segue destination="QS7-Rr-2A1" kind="show" id="Fms-Vy-VWq"/>
                             </connections>
                         </barButtonItem>
                     </navigationItem>
@@ -556,7 +555,6 @@
     <inferredMetricsTieBreakers>
         <segue reference="VR0-yC-xoc"/>
         <segue reference="VLm-ih-e6O"/>
-        <segue reference="znu-Ii-bwP"/>
     </inferredMetricsTieBreakers>
     <resources>
         <image name="WhatsApp Design Image" width="75" height="74.666664123535156"/>

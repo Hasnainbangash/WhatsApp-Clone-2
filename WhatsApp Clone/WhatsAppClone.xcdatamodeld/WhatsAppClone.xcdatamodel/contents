@@ -7,7 +7,9 @@
     </entity>
     <entity name="Messages" representedClassName="Messages" syncable="YES">
         <attribute name="date" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="isDelete" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="message" optional="YES" attributeType="String"/>
+        <attribute name="messageID" optional="YES" attributeType="String"/>
         <attribute name="receiverID" optional="YES" attributeType="String"/>
         <attribute name="senderID" optional="YES" attributeType="String"/>
     </entity>

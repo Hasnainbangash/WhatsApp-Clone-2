@@ -46,11 +46,11 @@ class ChatScreenViewController: UIViewController {
         loadMessages()
     }
     
-    // Fetch messages from Core Data
     func fetchMessagesFromCoreData(senderID: String, receiverID: String) {
         do {
             let request = Messages.fetchRequest() as NSFetchRequest<Messages>
-            let pred = NSPredicate(format: "(senderID == %@ AND receiverID == %@) OR (senderID == %@ AND receiverID == %@)",
+            // Add isDelete == false to the predicate
+            let pred = NSPredicate(format: "((senderID == %@ AND receiverID == %@) OR (senderID == %@ AND receiverID == %@)) AND isDelete == false",
                                    senderID, receiverID, receiverID, senderID)
             let sort = NSSortDescriptor(key: "date", ascending: true)
             
@@ -59,9 +59,13 @@ class ChatScreenViewController: UIViewController {
             
             let messages = try PersistentStorage.shared.context.fetch(request)
             messageChats = messages.map {
-                MessageChat(senderID: $0.senderID!,
-                            recieverID: $0.receiverID!,
-                            message: $0.message!)
+                MessageChat(
+                    id: $0.messageID ?? UUID().uuidString,
+                    senderID: $0.senderID!,
+                    recieverID: $0.receiverID!,
+                    message: $0.message!,
+                    date: $0.date
+                )
             }
             
             DispatchQueue.main.async {
@@ -76,22 +80,23 @@ class ChatScreenViewController: UIViewController {
         }
     }
     
-    // Saving the messages to Core Data
-    func saveMessageToCoreData(senderID: String, receiverID: String, message: String, date: TimeInterval) {
-        // Check if message already exists
+    // Modified saveMessageToCoreData function
+    func saveMessageToCoreData(messageID: String, senderID: String, receiverID: String, message: String, date: TimeInterval) {
+        // Check if message with this ID already exists
         let request = Messages.fetchRequest() as NSFetchRequest<Messages>
-        let pred = NSPredicate(format: "message == %@", message)
+        let pred = NSPredicate(format: "messageID == %@", messageID)
         request.predicate = pred
         
         do {
             let existingMessages = try context.fetch(request)
             if existingMessages.isEmpty {
-                // Only save the messages if the messages are not present
                 let newMessage = Messages(context: self.context)
+                newMessage.messageID = messageID
                 newMessage.senderID = senderID
                 newMessage.receiverID = receiverID
                 newMessage.message = message
                 newMessage.date = date
+                newMessage.isDelete = false  // Add this field to your Core Data model
                 
                 try PersistentStorage.shared.context.save()
                 print("Message saved successfully to Core Data")
@@ -115,42 +120,27 @@ class ChatScreenViewController: UIViewController {
                 }
                 
                 if let snapshotDocuments = querySnapshot?.documents {
-                    // Create a set to track existing messages
-                    var existingMessages = Set<String>()
-                    
-                    // Get existing messages from Core Data
-                    do {
-                        let request = Messages.fetchRequest() as NSFetchRequest<Messages>
-                        let messages = try self.context.fetch(request)
-                        existingMessages = Set(messages.compactMap { $0.message })
-                    } catch {
-                        print("Error fetching existing messages: \(error)")
-                    }
-                    
                     for doc in snapshotDocuments {
                         let data = doc.data()
                         let deletedByArray = data[K.FStore.deletedByIDField] as? [String] ?? []
-                        
-                        // Only process message if not deleted by current user
+
                         if !deletedByArray.contains(senderID) {
                             if let messageBody = data[K.FStore.messageField] as? String,
                                let messageSenderID = data[K.FStore.senderID] as? String,
                                let messageReceiverID = data[K.FStore.recieverID] as? String {
                                 
-                                // Only save if message doesn't exist in Core Data
-                                if !existingMessages.contains(messageBody) {
-                                    self.saveMessageToCoreData(
-                                        senderID: messageSenderID,
-                                        receiverID: messageReceiverID,
-                                        message: messageBody,
-                                        date: data[K.FStore.dateField] as? TimeInterval ?? Date().timeIntervalSince1970
-                                    )
-                                }
+                                self.saveMessageToCoreData(
+                                    messageID: doc.documentID,
+                                    senderID: messageSenderID,
+                                    receiverID: messageReceiverID,
+                                    message: messageBody,
+                                    date: data[K.FStore.dateField] as? TimeInterval ?? Date().timeIntervalSince1970
+                                )
                             }
                         }
                     }
                     
-                    // After saving new messages to Core Data, fetch and display all messages
+                    // After saving data to Core Data, fetch and display all messages
                     self.fetchMessagesFromCoreData(senderID: senderID, receiverID: self.recieverID)
                 }
             }
@@ -163,57 +153,63 @@ class ChatScreenViewController: UIViewController {
         fetchMessagesFromCoreData(senderID: senderID, receiverID: self.recieverID)
         
         // If there is no messages in the core data then fetch from the firestore
-        if messageChats.isEmpty {
-            fetchMessagesFromFirestore()
-        }
+        fetchMessagesFromFirestore()
+        //        if messageChats.isEmpty {
+        //            fetchMessagesFromFirestore()
+        //        }
     }
     
     private func deleteMessageFromFirestore(message: MessageChat, currentUserID: String) {
+        // Use the message ID instead of message content
         db.collection(K.FStore.messageCollection)
             .document("All User Messages")
             .collection("sender_receiver:\([currentUserID, recieverID].sorted())")
-            .whereField(K.FStore.messageField, isEqualTo: message.message)
-            .getDocuments { (querySnapshot, error) in
+            .document(message.id)  // Use the message ID directly
+            .getDocument { (document, error) in
                 if let error = error {
                     print("Error getting document for deletion: \(error)")
                     return
                 }
                 
-                if let snapshotDocuments = querySnapshot?.documents.first {
+                if let document = document, document.exists {
                     // Getting the deleted by array
-                    var deletedByArray = snapshotDocuments.data()[K.FStore.deletedByIDField] as? [String] ?? []
+                    var deletedByArray = document.data()?[K.FStore.deletedByIDField] as? [String] ?? []
                     
                     // Add current user if not already in array
                     if !deletedByArray.contains(currentUserID) {
                         deletedByArray.append(currentUserID)
-                    }
-                    
-                    // Updating the document with new deletedBy array
-                    snapshotDocuments.reference.updateData([
-                        K.FStore.deletedByIDField: deletedByArray
-                    ]) { error in
-                        if let error = error {
-                            print("Error updating deletedBy field: \(error)")
+                        
+                        // Updating the document with new deletedBy array
+                        document.reference.updateData([
+                            K.FStore.deletedByIDField: deletedByArray
+                        ]) { error in
+                            if let error = error {
+                                print("Error updating deletedBy field: \(error)")
+                            } else {
+                                print("Successfully updated deletedBy array in Firestore")
+                            }
                         }
                     }
                 }
             }
     }
+
     
+    // Modified deleteMessageFromCoreData function
     private func deleteMessageFromCoreData(message: MessageChat) {
         let request = Messages.fetchRequest() as NSFetchRequest<Messages>
-        let pred = NSPredicate(format: "message == %@", message.message)
+        let pred = NSPredicate(format: "messageID == %@", message.id)
         request.predicate = pred
         
         do {
             let messages = try context.fetch(request)
             for message in messages {
-                context.delete(message)
+                message.isDelete = true
             }
             try PersistentStorage.shared.context.save()
-            print("Successfully deleted message from Core Data")
+            print("Successfully marked message as deleted in Core Data")
         } catch {
-            print("Error deleting message from Core Data: \(error)")
+            print("Error marking message as deleted in Core Data: \(error)")
         }
     }
     
@@ -221,22 +217,18 @@ class ChatScreenViewController: UIViewController {
         let alert = UIAlertController(title: "Delete", message: "Are you sure you want to delete?", preferredStyle: .alert)
         
         let deleteButton = UIAlertAction(title: "Delete", style: .destructive) { _ in
-            guard let currentUserID = Auth.auth().currentUser?.uid, let selectedRows = self.chatTableView.indexPathsForSelectedRows else { return }
+            guard let currentUserID = Auth.auth().currentUser?.uid,
+                  let selectedRows = self.chatTableView.indexPathsForSelectedRows else { return }
             
             // For each selected message
             for indexPath in selectedRows {
                 let message = self.messageChats[indexPath.row]
                 
-                // Delete the messsage from the firestore
+                // Delete from Firestore first
                 self.deleteMessageFromFirestore(message: message, currentUserID: currentUserID)
                 
-                // Delete the message from thr core data
+                // Then delete from Core Data
                 self.deleteMessageFromCoreData(message: message)
-                
-                // Here updating the UI
-                if let cell = self.chatTableView.cellForRow(at: indexPath) as? ChatCell {
-                    cell.rightCheckBoxImageView.isHidden = true
-                }
             }
             
             // Deselect all rows
@@ -249,7 +241,9 @@ class ChatScreenViewController: UIViewController {
             
             // Refresh messages from Core Data
             if let currentUserID = Auth.auth().currentUser?.uid {
-                self.fetchMessagesFromCoreData(senderID: currentUserID, receiverID: self.recieverID)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self.fetchMessagesFromCoreData(senderID: currentUserID, receiverID: self.recieverID)
+                }
             }
         }
         
@@ -261,40 +255,29 @@ class ChatScreenViewController: UIViewController {
         self.present(alert, animated: true)
     }
     
+    // Modified sendPressed function
     @IBAction func sendPressed(_ sender: UIButton) {
-        
-        // Modified Code
         if let messageBody = messageTextfield.text, let senderID = Auth.auth().currentUser?.uid {
-            
-            db.collection(K.FStore.messageCollection)
+            let newDocRef = db.collection(K.FStore.messageCollection)
                 .document("All User Messages")
                 .collection("sender_receiver:\([senderID, recieverID].sorted())")
-                .addDocument(data: [
-                    K.FStore.senderID: senderID,
-                    K.FStore.recieverID: recieverID,
-                    K.FStore.messageField: messageBody,
-                    K.FStore.dateField: Date().timeIntervalSince1970
-                ]) { error in
-                    if let e = error {
-                        print("There was an issue saving messages to firestore, \(e)")
-                    } else {
-                        print("Successfully saved data.")
-                        
-                        self.loadMessages()
-                        
-                        print("Id before update current user")
-                        print("Sender id is: \(senderID)")
-                        print("Receiver id is: \(self.recieverID)")
-                        
-                        self.updateCurrentUsers(messageBody: messageBody, senderID: senderID, recieverID: self.recieverID)
-                        
-                        // Setting the text field to empty after clicking the send button
-                        DispatchQueue.main.async {
-                            self.messageTextfield.text = ""
-                        }
-                        print("merge the loading of two chats")
-                    }
+                .document()  // Generate new document ID
+            
+            newDocRef.setData([
+                K.FStore.senderID: senderID,
+                K.FStore.recieverID: recieverID,
+                K.FStore.messageField: messageBody,
+                K.FStore.dateField: Date().timeIntervalSince1970,
+                K.FStore.deletedByIDField: []
+            ]) { error in
+                if let e = error {
+                    print("There was an issue saving messages to firestore, \(e)")
+                } else {
+                    print("Successfully saved data.")
+                    self.messageTextfield.text = ""
+                    self.updateCurrentUsers(messageBody: messageBody, senderID: senderID, recieverID: self.recieverID)
                 }
+            }
         }
     }
     
