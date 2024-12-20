@@ -200,11 +200,12 @@ class ChatScreenViewController: UIViewController {
     }
     
     private func deleteMessageFromCoreData(message: MessageChat) {
-        let fetchRequest: NSFetchRequest<Messages> = Messages.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "message == %@", message.message)
+        let request = Messages.fetchRequest() as NSFetchRequest<Messages>
+        let pred = NSPredicate(format: "message == %@", message.message)
+        request.predicate = pred
         
         do {
-            let messages = try context.fetch(fetchRequest)
+            let messages = try context.fetch(request)
             for message in messages {
                 context.delete(message)
             }
